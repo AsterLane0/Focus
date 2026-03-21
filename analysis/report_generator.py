@@ -3,9 +3,11 @@
 """
 import requests
 
+
 class ReportGenerator:
     def __init__(self):
         pass
+
     @staticmethod
     def generate_report(analysis_dict, recommendation_dict):
         daily_report = {}
@@ -17,6 +19,13 @@ class ReportGenerator:
         daily_report["advice"] = recommendation_dict["advice"]
 
         return daily_report
-    @staticnmethod
-    def ai_summary():
-        API_KEY =
+
+    def generate(self, analysis_dict, recommendation_dict):
+        """
+        向后兼容 main.py 的调用方式。
+        """
+        return self.generate_report(analysis_dict, recommendation_dict)
+
+    # @staticmethod
+    # def ai_summary():
+    #     API_KEY =

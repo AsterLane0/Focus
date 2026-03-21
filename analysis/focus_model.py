@@ -18,8 +18,6 @@ import math
 import statistics
 from datetime import datetime
 
-
-
 class FocusModel:
     def __init__(self):
         # RMSSD normalization
@@ -232,29 +230,30 @@ class FocusModel:
 
         return all_data_dict_per_pomodoro, score_list_per_pomodoro
 
+    def run(self, history_dict):
+        """
+        统一入口：输入单日历史心率数据，输出番茄钟级别评分结果。
+        """
+        if not history_dict or not history_dict.get("time") or not history_dict.get("hr"):
+            return {
+                "window_result": [],
+                "all_data_per_pomodoro": {},
+                "score_list_per_pomodoro": [],
+            }
 
-if __name__ == "__main__":
-    model = FocusModel()
-    history_dict = {
-        "time": [
-            "22:40", "22:41", "22:42", "22:43", "22:44", "22:45", "22:46", "22:47", "22:48", "22:49",
-            "22:50", "22:51", "22:52", "22:53", "22:54", "22:55", "22:56", "22:57", "22:58", "22:59",
-            "23:00", "23:01", "23:02", "23:03", "23:04", "23:05", "23:06", "23:07", "23:08", "23:09",
-            "23:10", "23:11", "23:12", "23:13", "23:14", "23:15", "23:16", "23:17", "23:18", "23:19",
-            "23:20", "23:21", "23:22", "23:23", "23:24", "23:25", "23:26", "23:27", "23:28", "23:29",
-            "23:30", "23:31", "23:32", "23:33", "23:34", "23:35", "23:36", "23:37", "23:38", "23:39"
-        ],
-        "hr": [
-            72, 71, 73, 74, 72, 70, 69, 71, 72, 73,
-            74, 75, 73, 72, 71, 70, 69, 70, 71, 72,
-            73, 74, 75, 76, 74, 73, 72, 71, 70, 69,
-            70, 71, 72, 73, 74, 75, 74, 73, 72, 71,
-            70, 69, 70, 71, 72, 73, 74, 75, 76, 75,
-            74, 73, 72, 71, 70, 69, 70, 71, 72, 73
-        ]
-    }
+        window_result = self.calculate_focus_from_hr(history_dict)
+        if not window_result:
+            return {
+                "window_result": [],
+                "all_data_per_pomodoro": {},
+                "score_list_per_pomodoro": [],
+            }
 
-    result_list = model.calculate_focus_from_hr(history_dict)
-    all_data_per_pomodoro, score_list_per_pomodoro = model.calculate_pomodoro_score(result_list)
-    print(all_data_per_pomodoro)
-    print(score_list_per_pomodoro)
+        all_data_per_pomodoro, score_list_per_pomodoro = self.calculate_pomodoro_score(
+            window_result
+        )
+        return {
+            "window_result": window_result,
+            "all_data_per_pomodoro": all_data_per_pomodoro,
+            "score_list_per_pomodoro": score_list_per_pomodoro,
+        }

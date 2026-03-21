@@ -70,3 +70,9 @@ class RecommendationEngine:
                 recommendation_dict["message"] += "，专注度稳定"
 
         return recommendation_dict
+
+    def generate(self, analysis_dict):
+        """
+        统一入口，兼容 main.py 调用。
+        """
+        return self.create_recommendation_over_day(analysis_dict)

@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="zh-CN" style="background: transparent;">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        html, body {
+            background: transparent !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            overflow: hidden !important;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: transparent;
+            font-family: 'Microsoft YaHei', -apple-system, sans-serif;
+            position: relative;
+        }
+
+        html {
+            background: transparent;
+        }
+
+        .window-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            will-change: transform;
+        }
+
+        .content-wrapper {
+            position: relative;
+            width: 210px;
+            height: 300px;
+            overflow: hidden;
+            clip-path: inset(0);
+            -webkit-app-region: drag;
+        }
+
+        .content-wrapper button,
+        .content-wrapper input,
+        .content-wrapper .icon-btn,
+        .content-wrapper .tab-btn,
+        .content-wrapper .date-btn,
+        .content-wrapper .close-btn,
+        .content-wrapper .stats-back,
+        .content-wrapper .view-detail,
+        .content-wrapper .pie-back,
+        .content-wrapper .btn-container,
+        .content-wrapper .bottom-bar {
+            -webkit-app-region: no-drag;
+        }
+
+        .bg-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 210px;
+            height: 300px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            z-index: -1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 210px;
+            height: 300px;
+            border-radius: 30px;
+            overflow: hidden;
+            will-change: left;
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .page-inner {
+            width: 210px;
+            height: 300px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 12px 8px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 3px;
+            right: 15px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: #555;
+            font-size: 14px;
+            z-index: 100;
+        }
+
+        .task-input {
+            width: 150px;
+            font-size: 10px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            color: #222;
+            outline: none;
+            margin: 8px auto;
+        }
+
+        .task-input::placeholder {
+            color: #666;
+        }
+
+        .timer-container {
+            position: relative;
+            width: 110px;
+            height: 110px;
+            margin: 5px auto;
+        }
+
+        .circle-progress {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+            transform-origin: center center;
+        }
+
+        .circle-progress circle {
+            fill: none;
+            stroke: #764ba2;
+            stroke-width: 5;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s linear;
+        }
+
+        .time-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #222;
+            font-size: 30px;
+            font-weight: 300;
+        }
+
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 8px;
+            position: relative;
+            z-index: 100;
+        }
+
+        .btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #764ba2;
+            color: white;
+        }
+
+        .status {
+            color: #555;
+            font-size: 9px;
+            margin-top: 8px;
+            font-weight: 500;
+            text-align: center;
+            width: 100%;
+        }
+
+        .pomodoro-hint {
+            color: #aaa;
+            font-size: 8px;
+            margin-top: 4px;
+            text-align: center;
+            width: 100%;
+            line-height: 1.2;
+        }
+
+        .completed {
+            color: #4CAF50;
+            font-size: 10px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .bottom-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 15px;
+            margin-top: auto;
+            margin-bottom: 8px;
+        }
+
+        .icon-btn {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: #555;
+            font-size: 10px;
+        }
+
+        /* 统计页面样式 */
+        .stats-header {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 15px;
+            padding-top: 5px;
+        }
+
+        .stats-back {
+            display: flex;
+            align-items: center;
+            font-size: 9px;
+            color: #764ba2;
+            cursor: pointer;
+            margin-bottom: 15px;
+            padding-top: 10px;
+            padding-left: 10px;
+        }
+
+        .stats-back::before {
+            content: "◀";
+            margin-right: 5px;
+        }
+
+        .stats-content {
+            flex: 1;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding: 0 12px;
+            pointer-events: auto;
+            -webkit-app-region: drag;
+        }
+        
+        .stats-content button,
+        .stats-content .stat-col,
+        .stats-content .stats-section {
+            -webkit-app-region: no-drag;
+        }
+
+        .stats-content::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+            justify-content: flex-start;
+            padding-left: 10px;
+        }
+
+        .tab-btn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 10px;
+            background: #ddd;
+            color: #666;
+            font-size: 8px;
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            background: #764ba2;
+            color: white;
+        }
+
+        .date-nav {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 12px;
+            gap: 8px;
+        }
+
+        .date-btn {
+            width: auto;
+            height: auto;
+            border: none;
+            background: transparent;
+            color: #764ba2;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 2px 4px;
+        }
+
+        .date-btn.disabled {
+            background: transparent;
+            color: #999;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .date-text {
+            font-size: 10px;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .focus-score-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(118, 75, 162, 0.2);
+            margin-bottom: 12px;
+        }
+
+        .focus-score-label {
+            font-size: 11px;
+            color: #333;
+        }
+
+        .focus-score-value {
+            font-size: 11px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .view-detail {
+            font-size: 9px;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .stat-col {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            padding: 10px 5px;
+            text-align: center;
+        }
+
+        .stat-col-label {
+            font-size: 9px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .stat-col-value {
+            font-size: 15px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .stat-col-unit {
+            font-size: 9px;
+            color: #888;
+        }
+
+        .stats-section {
+            background: rgba(118, 75, 162, 0.1);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .section-label {
+            font-size: 10px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .section-placeholder {
+            font-size: 10px;
+            color: #aaa;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .trend-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .trend-scroll-day {
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 2px;
+            scrollbar-width: thin;
+        }
+
+        .trend-svg {
+            width: 100%;
+            height: 84px;
+            display: block;
+        }
+
+        .trend-svg-week {
+            height: 104px;
+        }
+
+        .trend-labels {
+            display: flex;
+            justify-content: space-between;
+            gap: 4px;
+            flex-wrap: wrap;
+            font-size: 7px;
+            color: #8b7ea8;
+            line-height: 1.2;
+            margin-top: 2px;
+        }
+
+        .trend-label {
+            max-width: 48px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .trend-wrap-week {
+            position: relative;
+            padding-bottom: 18px;
+        }
+
+        .trend-axis {
+            position: relative;
+            height: 14px;
+            margin-top: 2px;
+        }
+
+        .week-axis-label {
+            position: absolute;
+            transform: translateX(-50%);
+            font-size: 7px;
+            color: #8b7ea8;
+            white-space: nowrap;
+        }
+
+        .week-point-label {
+            font-size: 7px;
+            fill: #764ba2;
+            font-weight: 600;
+        }
+
+        .trend-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 8px;
+            color: #8b7ea8;
+        }
+
+        .day-axis {
+            position: relative;
+            height: 12px;
+            margin-top: 2px;
+            font-size: 7px;
+            color: #8b7ea8;
+        }
+
+        .day-axis-label {
+            position: absolute;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+
+        .day-point-label {
+            font-size: 7px;
+            fill: #764ba2;
+            font-weight: 600;
+        }
+
+        .period-item {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 8px;
+            padding: 6px 8px;
+            margin-bottom: 6px;
+            text-align: left;
+        }
+
+        .period-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .period-chip {
+            border: none;
+            border-radius: 10px;
+            padding: 7px 8px;
+            background: rgba(255, 255, 255, 0.72);
+            color: #5f4a86;
+            text-align: left;
+            cursor: pointer;
+            min-width: 0;
+            flex: 0 0 auto;
+            max-width: 100%;
+            box-shadow: inset 0 0 0 1px rgba(118, 75, 162, 0.08);
+        }
+
+        .period-chip.active {
+            background: #764ba2;
+            color: #fff;
+            box-shadow: none;
+        }
+
+        .period-chip.normal {
+            background: rgba(118, 75, 162, 0.10);
+        }
+
+        .period-chip.overload {
+            background: rgba(224, 176, 184, 0.28);
+            color: #8c5a66;
+        }
+
+        .period-chip.active.normal {
+            background: #764ba2;
+            color: #fff;
+        }
+
+        .period-chip.active.overload {
+            background: #c97b86;
+            color: #fff;
+        }
+
+        .period-chip-time {
+            font-size: 9px;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 2px;
+            white-space: nowrap;
+        }
+
+        .period-chip-state {
+            font-size: 7px;
+            opacity: 0.9;
+            white-space: nowrap;
+        }
+
+        .period-time {
+            font-size: 9px;
+            color: #444;
+            margin-bottom: 3px;
+        }
+
+        .period-score {
+            font-size: 8px;
+            color: #8b7ea8;
+        }
+
+        .pie-summary {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pie-ring {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pie-ring-inner {
+            width: 74px;
+            height: 74px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.94);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #764ba2;
+            text-align: center;
+        }
+
+        .pie-ring-value {
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .pie-ring-label {
+            font-size: 8px;
+            margin-top: 2px;
+        }
+
+        .pie-legend {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            font-size: 8px;
+            color: #555;
+            gap: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .dot.focused {
+            background: #764ba2;
+        }
+
+        .dot.idle {
+            background: rgba(118, 75, 162, 0.25);
+        }
+
+        .pie-recommendation {
+            width: 100%;
+            background: rgba(118, 75, 162, 0.08);
+            border-radius: 10px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .pie-rec-title {
+            font-size: 10px;
+            color: #5d3d85;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .pie-rec-message {
+            font-size: 8px;
+            color: #777;
+            line-height: 1.4;
+        }
+
+        /* 饼图页面样式 */
+        .pie-back {
+            display: flex;
+            align-items: center;
+            font-size: 9px;
+            color: #764ba2;
+            cursor: pointer;
+            margin-bottom: 10px;
+            padding-top: 10px;
+            padding-left: 10px;
+        }
+
+        .pie-back::before {
+            content: "◀";
+            margin-right: 3px;
+        }
+
+        .pie-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-app-region: drag;
+        }
+        
+        .pie-placeholder {
+            -webkit-app-region: no-drag;
+        }
+
+        .pie-placeholder {
+            font-size: 10px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="window-container">
+        <div class="content-wrapper" id="contentWrapper">
+
+            <!-- 登录页面 -->
+            <div class="page login-page" id="loginPage" style="left: 0;">
+                <div class="page-inner">
+                    <div class="main-content">
+                        <h3 style="margin-bottom: 14px; color: #5e3f8f;">欢迎登录</h3>
+
+                        <div style="margin-bottom: 10px; font-size: 12px; color: #666;">请选择你的用户</div>
+
+                        <select id="loginUserSelect" style="width: 160px; height: 28px; border-radius: 8px; border: 1px solid #ccc; padding: 0 8px; margin-bottom: 14px;">
+                            <option value="">加载中...</option>
+                        </select>
+
+                        <button onclick="loginUser()" style="width: 120px; height: 30px; border: none; border-radius: 8px; background: #764ba2; color: white; cursor: pointer;">
+                            登录
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-container"></div>
+            
+            <!-- 主界面 -->
+            <div class="page" id="mainPage">
+                <div class="page-inner">
+                    <button class="close-btn" onclick="quitApp()">×</button>
+                    <div class="main-content">
+                        <div class="timer-container" id="timerContainer">
+                            <svg class="circle-progress" viewBox="0 0 110 110">
+                                <circle cx="55" cy="55" r="50" id="progressCircle"/>
+                            </svg>
+                            <div class="time-display" id="timeDisplay">25:00</div>
+                        </div>
+                        
+                        <div class="btn-container" id="btnContainer">
+                            <button class="btn" onclick="toggleTimer()">▶</button>
+                        </div>
+                        
+                        <div class="status" id="status">点击开始专注</div>
+                        <div class="pomodoro-hint" id="pomodoroHint">今天第 1 个番茄钟</div>
+                        
+                        <div class="bottom-bar">
+                            <button class="icon-btn" onclick="showStatsPage()">☰</button>
+                            <button class="icon-btn" onclick="quitApp()">×</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 统计页面 -->
+            <div class="page stats-page" id="statsPage" style="left: -210px;">
+                <div class="page-inner">
+                    <div class="stats-header">
+                        <button class="close-btn" onclick="quitApp()">×</button>
+                    </div>
+                    <div class="stats-back" onclick="hideStatsPage()">返回</div>
+                    
+                    <div class="stats-content">
+                        <div class="tab-buttons">
+                            <button class="tab-btn active" id="dayTab" onclick="switchTab('day')">日</button>
+                            <button class="tab-btn" id="weekTab" onclick="switchTab('week')">周</button>
+                        </div>
+
+                        <div class="date-nav">
+                            <button class="date-btn" id="prevDate" onclick="changeDate(-1)"><</button>
+                            <span class="date-text" id="dateText">2026年3月18日</span>
+                            <button class="date-btn" id="nextDate" onclick="changeDate(1)">></button>
+                        </div>
+                        
+                        <div class="focus-score-row">
+                            <div>
+                                <span class="focus-score-label" id="focusScoreLabel">专注度：</span>
+                                <span class="focus-score-value" id="focusScore">--</span>
+                            </div>
+                            <span class="view-detail" onclick="showPiePage()">查看详情</span>
+                        </div>
+                        
+                        <div class="stats-row">
+                            <div class="stat-col">
+                                <div class="stat-col-label">总时长</div>
+                                <div class="stat-col-value" id="totalTime">--</div>
+                                <div class="stat-col-unit">分钟</div>
+                            </div>
+                            <div class="stat-col">
+                                <div class="stat-col-label">专注时长</div>
+                                <div class="stat-col-value" id="focusTime">--</div>
+                                <div class="stat-col-unit">分钟</div>
+                            </div>
+                            <div class="stat-col">
+                                <div class="stat-col-label">平均心率</div>
+                                <div class="stat-col-value" id="heartRate">--</div>
+                                <div class="stat-col-unit">bpm</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-section">
+                            <div class="section-label" id="hrvChartLabel">番茄钟HRV曲线</div>
+                            <div class="section-placeholder" id="hrvChart">（折线图待接入）</div>
+                        </div>
+                        
+                        <div class="stats-section" id="focusPeriodsSection">
+                            <div class="section-label">专注时段</div>
+                            <div class="section-placeholder" id="focusPeriods">（优秀时间段）</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 饼图页面 -->
+            <div class="page pie-page" id="piePage" style="left: 210px;">
+                <div class="page-inner">
+                    <div class="stats-header">
+                        <button class="close-btn" onclick="quitApp()">×</button>
+                    </div>
+                    <div class="pie-back" onclick="hidePiePage()">返回</div>
+                    <div class="pie-content" id="pieContent">
+                        <div class="pie-placeholder">饼图待接入</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showLoginPage() {
+            document.getElementById('loginPage').style.display = 'block';
+            document.getElementById('mainPage').style.display = 'none';
+            document.getElementById('statsPage').style.display = 'none';
+            document.getElementById('piePage').style.display = 'none';
+        }
+
+        function showMainPage() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('mainPage').style.display = 'block';
+            document.getElementById('statsPage').style.display = 'block';
+            document.getElementById('piePage').style.display = 'block';
+        }
+
+        async function loginUser() {
+            const select = document.getElementById('loginUserSelect');
+            const userId = select.value;
+
+            if (!userId) {
+                alert('请先选择一个用户');
+                return;
+            }
+
+            currentUserId = userId;
+            localStorage.setItem('focus_user_id', userId);
+
+            showMainPage();
+            loadDashboardData();
+        }
+
+
+        const BASE_WIDTH = 210;
+        const BASE_HEIGHT = 300;
+
+        function handleResize() {
+            const wrapper = document.getElementById('contentWrapper');
+            wrapper.style.zoom = 1;
+        }
+
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('load', handleResize);
+
+        const today = new Date();
+        let currentDate = new Date(today);
+        
+        let currentTab = 'day';
+        let currentDashboard = null;
+        let currentUserId = null;
+        let currentRangeLabel = null;
+        let currentFocusPeriods = [];
+        let currentSelectedPomodoroIndex = 0;
+
+        const API_BASE = 'http://127.0.0.1:8000';
+
+        function formatDate(date) {
+            return date.getFullYear() + '年' + (date.getMonth() + 1) + '月' + date.getDate() + '日';
+        }
+
+        function formatDateKey(date) {
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${date.getFullYear()}-${month}-${day}`;
+        }
+
+        function parseDateKey(dateKey) {
+            const [year, month, day] = dateKey.split('-').map(Number);
+            return new Date(year, month - 1, day);
+        }
+
+        function formatWeekRangeLabel(date) {
+            const start = new Date(date);
+            const day = start.getDay();
+            const offset = day === 0 ? -6 : 1 - day;
+            start.setDate(start.getDate() + offset);
+            const end = new Date(start);
+            end.setDate(start.getDate() + 6);
+            return `${start.getMonth() + 1}月${start.getDate()}日 - ${end.getMonth() + 1}月${end.getDate()}日`;
+        }
+
+        function updateDateDisplay() {
+            const displayText = currentTab === 'week'
+                ? (currentRangeLabel || formatWeekRangeLabel(currentDate))
+                : formatDate(currentDate);
+            document.getElementById('dateText').textContent = displayText;
+            updateFocusScoreLabel();
+            
+            const dateKey = formatDateKey(currentDate);
+            const todayKey = formatDateKey(today);
+            
+            const limitDate = new Date(today);
+            if (currentTab === 'day') {
+                limitDate.setDate(limitDate.getDate() + 1);
+            } else {
+                limitDate.setDate(limitDate.getDate() + 7);
+            }
+            const limitKey = formatDateKey(limitDate);
+            
+            document.getElementById('nextDate').className = 'date-btn' + (dateKey >= limitKey ? ' disabled' : '');
+        }
+
+        function updateFocusScoreLabel() {
+            const label = document.getElementById('focusScoreLabel');
+            if (!label) return;
+            label.textContent = currentTab === 'week' ? '周平均专注度：' : '专注度：';
+        }
+
+        function updateHrvChartLabel(period) {
+            const label = document.getElementById('hrvChartLabel');
+            if (!label) return;
+            if (!period) {
+                label.textContent = currentTab === 'week' ? 'HRV趋势' : '番茄钟HRV曲线';
+                return;
+            }
+            label.textContent = `${period.start_time} - ${period.end_time} · ${period.state || '正常'}`;
+        }
+
+        function renderPomodoroCurve(points) {
+            const container = document.getElementById('hrvChart');
+            if (!points || points.length === 0) {
+                container.innerHTML = '（暂无该番茄钟HRV曲线）';
+                return;
+            }
+
+            const values = points.map(point => point.value ?? 0);
+            const validValues = values.filter(value => value !== null && value !== undefined);
+            if (validValues.length === 0) {
+                container.innerHTML = '（暂无该番茄钟HRV曲线）';
+                return;
+            }
+
+            const width = 170;
+            const height = 84;
+            const paddingLeft = 2;
+            const paddingRight = 20;
+            const paddingY = 7;
+            const min = Math.min(...validValues);
+            const max = Math.max(...validValues);
+            const range = max - min || 1;
+            const plotWidth = width - paddingLeft - paddingRight;
+            const step = points.length > 1 ? plotWidth / (points.length - 1) : 0;
+            const coords = points.map((point, index) => {
+                const x = paddingLeft + index * step;
+                const y = height - paddingY - ((Number(point.value ?? 0) - min) / range) * (height - paddingY * 2);
+                return { x, y, value: point.value ?? 0, time: point.time || point.label || '' };
+            });
+
+            const segments = [];
+            let currentSegment = [];
+            coords.forEach((point) => {
+                if (point) {
+                    currentSegment.push(`${point.x},${point.y}`);
+                } else if (currentSegment.length) {
+                    if (currentSegment.length > 1) segments.push(currentSegment.slice());
+                    currentSegment = [];
+                }
+            });
+            if (currentSegment.length > 1) {
+                segments.push(currentSegment.slice());
+            }
+
+            const lineMarkup = segments.map(segment => `
+                <polyline points="${segment.join(' ')}" fill="none" stroke="#764ba2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+            `).join('');
+
+            const dotMarkup = coords.map((point) => {
+                const labelY = index === 0 ? point.y - 12 : (point.y <= 18 ? point.y - 12 : point.y - 8);
+                return `
+                    <g>
+                        <circle cx="${point.x}" cy="${point.y}" r="4.5" fill="#764ba2"></circle>
+                        <circle cx="${point.x}" cy="${point.y}" r="7" fill="transparent">
+                            <title>${point.time}: ${Number(point.value).toFixed(1)}</title>
+                        </circle>
+                        <text x="${point.x}" y="${labelY}" text-anchor="middle" class="day-point-label">${Number(point.value).toFixed(1)}</text>
+                    </g>
+                `;
+            }).join('');
+
+            const axisLabels = coords.map((point) => `
+                <span class="day-axis-label" style="left:${Math.min(Math.max(point.x, 12), width - 18)}px">${point.time}</span>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="trend-wrap">
+                    <svg class="trend-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+                        ${lineMarkup}
+                        ${dotMarkup}
+                    </svg>
+                    <div class="day-axis">${axisLabels}</div>
+                </div>
+            `;
+        }
+
+        function selectPomodoro(index) {
+            if (!currentFocusPeriods || currentFocusPeriods.length === 0) return;
+            currentSelectedPomodoroIndex = Math.max(0, Math.min(index, currentFocusPeriods.length - 1));
+            const period = currentFocusPeriods[currentSelectedPomodoroIndex];
+            document.querySelectorAll('.period-chip').forEach((el, idx) => {
+                el.classList.toggle('active', idx === currentSelectedPomodoroIndex);
+            });
+            updateHrvChartLabel(period);
+            renderPomodoroCurve(period.hrv_points || []);
+        }
+
+        function renderTrendChart(points) {
+            const container = document.getElementById('hrvChart');
+            if (!points || points.length === 0) {
+                container.innerHTML = '（暂无趋势数据）';
+                return;
+            }
+
+            const isWeekView = currentTab === 'week';
+            if (isWeekView) {
+                const values = points.map(point => point.value);
+                const validValues = values.filter(value => value !== null && value !== undefined);
+                if (validValues.length === 0) {
+                    container.innerHTML = '（暂无周趋势数据）';
+                    return;
+                }
+
+                const width = 170;
+                const height = 92;
+                const paddingLeft = 8;
+                const paddingRight = 24;
+                const paddingY = 12;
+                const scaleMin = 0;
+                const scaleMax = 100;
+                const range = scaleMax - scaleMin;
+                const plotWidth = width - paddingLeft - paddingRight;
+                const stepX = points.length > 1 ? plotWidth / (points.length - 1) : 0;
+
+                const coords = points.map((point, index) => {
+                    if (point.value === null || point.value === undefined) return null;
+                    const x = paddingLeft + index * stepX;
+                    const clampedValue = Math.max(scaleMin, Math.min(scaleMax, point.value));
+                    const y = height - paddingY - ((clampedValue - scaleMin) / range) * (height - paddingY * 2);
+                    return { x, y };
+                });
+
+                const segments = [];
+                let currentSegment = [];
+                coords.forEach((point) => {
+                    if (point) {
+                        currentSegment.push(`${point.x},${point.y}`);
+                    } else if (currentSegment.length) {
+                        if (currentSegment.length > 1) {
+                            segments.push(currentSegment.slice());
+                        }
+                        currentSegment = [];
+                    }
+                });
+                if (currentSegment.length > 1) {
+                    segments.push(currentSegment.slice());
+                }
+
+                const lineMarkup = segments.map(segment => `
+                    <polyline points="${segment.join(' ')}" fill="none" stroke="#764ba2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                `).join('');
+
+                const dotMarkup = coords.map((point, index) => {
+                    const label = points[index].time || '';
+                    if (!point) {
+                        return `<circle cx="${paddingLeft + index * stepX}" cy="${height / 2}" r="2.5" fill="#d9ccea" opacity="0.4"></circle>`;
+                    }
+                    const valueLabel = points[index].value?.toFixed(1) ?? '--';
+                    const labelY = point.y - 8;
+                    return `
+                        <g>
+                            <circle cx="${point.x}" cy="${point.y}" r="4" fill="#764ba2"></circle>
+                            <circle cx="${point.x}" cy="${point.y}" r="6" fill="transparent">
+                                <title>${label}: ${points[index].value?.toFixed(2) ?? '--'}</title>
+                            </circle>
+                            <text x="${point.x}" y="${labelY}" text-anchor="middle" class="week-point-label">${valueLabel}</text>
+                        </g>
+                    `;
+                }).join('');
+
+                const axisLabels = points.map((point, index) => {
+                    const x = paddingLeft + index * stepX;
+                    return `<span class="week-axis-label" style="left:${x}px">${point.time}</span>`;
+                }).join('');
+
+                container.innerHTML = `
+                    <div class="trend-wrap trend-wrap-week">
+                        <svg class="trend-svg trend-svg-week" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+                            ${lineMarkup}
+                            ${dotMarkup}
+                        </svg>
+                        <div class="trend-axis">${axisLabels}</div>
+                        <div class="trend-meta">
+                            <span>最低 ${Math.min(...validValues).toFixed(2)}</span>
+                            <span>最高 ${Math.max(...validValues).toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const width = 170;
+            const height = 84;
+            const paddingLeft = 18;
+            const paddingRight = 18;
+            const paddingY = 10;
+            const scaleMin = Math.min(...points.map(point => point.value ?? point.hrv ?? point.focus ?? point.stress ?? 0));
+            const scaleMax = Math.max(...points.map(point => point.value ?? point.hrv ?? point.focus ?? point.stress ?? 0));
+            const range = scaleMax - scaleMin || 1;
+            const scrollWidth = 720;
+            const plotWidth = scrollWidth - paddingLeft - paddingRight;
+
+            function parseClockMinutes(timeText) {
+                if (!timeText || typeof timeText !== 'string') return null;
+                const match = timeText.match(/(\d{1,2}):(\d{2})/);
+                if (!match) return null;
+                const hour = Number(match[1]);
+                const minute = Number(match[2]);
+                if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
+                return hour * 60 + minute;
+            }
+
+            const coords = points.map((point) => {
+                const value = point.value ?? point.hrv ?? point.focus ?? point.stress ?? null;
+                const minutes = parseClockMinutes(point.time || point.label || '');
+                if (value === null || value === undefined || minutes === null) return null;
+                const x = paddingLeft + (minutes / (24 * 60)) * plotWidth;
+                const y = height - paddingY - ((value - scaleMin) / range) * (height - paddingY * 2);
+                return { x, y, value, time: point.time || point.label || '' };
+            });
+
+            const dotMarkup = coords.map((point, index) => {
+                const rawPoint = points[index];
+                if (!point) {
+                    const missingMinutes = parseClockMinutes(rawPoint.time || rawPoint.label || '');
+                    const x = missingMinutes === null
+                        ? paddingLeft + (index / Math.max(points.length - 1, 1)) * plotWidth
+                        : paddingLeft + (missingMinutes / (24 * 60)) * plotWidth;
+                    return `
+                        <g>
+                            <circle cx="${x}" cy="${height / 2 - 2}" r="6.5" fill="#d8d0ea" opacity="0.28"></circle>
+                            <circle cx="${x}" cy="${height / 2 - 2}" r="9" fill="transparent">
+                                <title>暂无数据</title>
+                            </circle>
+                        </g>
+                    `;
+                }
+                return `
+                    <g>
+                        <circle cx="${point.x}" cy="${point.y}" r="5" fill="#764ba2"></circle>
+                        <circle cx="${point.x}" cy="${point.y}" r="6" fill="transparent">
+                            <title>${rawPoint.time || rawPoint.label || ''}: ${Number(point.value).toFixed(1)}</title>
+                        </circle>
+                    </g>
+                `;
+            }).join('');
+
+            const axisTicks = [0, 6, 12, 18, 24].map(hour => {
+                const x = paddingLeft + (hour / 24) * plotWidth;
+                const label = hour === 24 ? '24:00' : `${String(hour).padStart(2, '0')}:00`;
+                return `<span class="day-axis-label" style="left:${x}px">${label}</span>`;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="trend-wrap">
+                    <div class="trend-scroll-day">
+                        <svg class="trend-svg" style="width:${scrollWidth}px; min-width:${scrollWidth}px;" viewBox="0 0 ${scrollWidth} ${height}" preserveAspectRatio="none">
+                            ${dotMarkup}
+                        </svg>
+                        <div class="day-axis" style="width:${scrollWidth}px;">${axisTicks}</div>
+                    </div>
+                    <div class="trend-meta">
+                        <span>最低 ${scaleMin.toFixed(1)}</span>
+                        <span>最高 ${scaleMax.toFixed(1)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderFocusPeriods(periods) {
+            const container = document.getElementById('focusPeriods');
+            const section = document.getElementById('focusPeriodsSection');
+            if (section) {
+                section.style.display = currentTab === 'week' ? 'none' : 'block';
+            }
+            if (currentTab === 'week') {
+                currentFocusPeriods = [];
+                return;
+            }
+
+            if (!periods || periods.length === 0) {
+                container.innerHTML = '（暂无专注时段）';
+                currentFocusPeriods = [];
+                return;
+            }
+
+            currentFocusPeriods = periods
+                .slice()
+                .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
+
+            const items = currentFocusPeriods.map((period, index) => {
+                const statusClass = (period.state || '正常') === '压力过大' ? 'overload' : 'normal';
+                return `
+                    <button class="period-chip ${statusClass} ${index === currentSelectedPomodoroIndex ? 'active' : ''}" onclick="selectPomodoro(${index})">
+                        <div class="period-chip-time">${period.start_time} - ${period.end_time}</div>
+                        <div class="period-chip-state">${period.state || '正常'} · 专注 ${Number(period.focus || 0).toFixed(1)} / 压力 ${Number(period.stress || 0).toFixed(1)}</div>
+                    </button>
+                `;
+            }).join('');
+
+            container.innerHTML = `<div class="period-list">${items}</div>`;
+        }
+
+        function renderPiePage(summary) {
+            const container = document.getElementById('pieContent');
+            if (!summary) {
+                container.innerHTML = '<div class="pie-placeholder">暂无饼图数据</div>';
+                return;
+            }
+
+            const total = summary.total_minutes ?? 0;
+            const focus = summary.focus_minutes || 0;
+            if (total <= 0) {
+                container.innerHTML = '<div class="pie-placeholder">暂无可用数据</div>';
+                return;
+            }
+            const focusPercent = Math.max(0, Math.min(100, (focus / total) * 100));
+            const otherPercent = 100 - focusPercent;
+            const recommendation = summary.recommendation || {};
+
+            container.innerHTML = `
+                <div class="pie-summary">
+                    <div class="pie-ring" style="background: conic-gradient(#764ba2 0 ${focusPercent}%, rgba(118, 75, 162, 0.15) ${focusPercent}% 100%);">
+                        <div class="pie-ring-inner">
+                            <div class="pie-ring-value">${focusPercent.toFixed(0)}%</div>
+                            <div class="pie-ring-label">专注占比</div>
+                        </div>
+                    </div>
+                    <div class="pie-legend">
+                        <div class="legend-item"><span class="dot focused"></span> 专注 ${focus} 分钟</div>
+                        <div class="legend-item"><span class="dot idle"></span> 其他 ${Math.max(total - focus, 0)} 分钟</div>
+                    </div>
+                    <div class="pie-recommendation">
+                        <div class="pie-rec-title">${recommendation.state || '正常状态'}</div>
+                        <div class="pie-rec-message">${recommendation.message || ''}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDashboardError(message) {
+            currentDashboard = null;
+            currentSelectedPomodoroIndex = 0;
+            document.getElementById('focusScore').textContent = '--';
+            document.getElementById('totalTime').textContent = '--';
+            document.getElementById('focusTime').textContent = '--';
+            document.getElementById('heartRate').textContent = '--';
+            document.getElementById('focusPeriods').innerHTML = `（${message || '暂无可用数据'}）`;
+            updateHrvChartLabel(null);
+            document.getElementById('hrvChart').innerHTML = `（${message || '暂无可用数据'}）`;
+            document.getElementById('pieContent').innerHTML = '<div class="pie-placeholder">暂无可用数据</div>';
+        }
+
+        function applyDashboard(summary) {
+            currentDashboard = summary;
+            document.getElementById('focusScore').textContent = summary.focus_score == null ? '--' : Number(summary.focus_score).toFixed(1);
+            document.getElementById('totalTime').textContent = summary.total_minutes == null ? '--' : summary.total_minutes;
+            document.getElementById('focusTime').textContent = summary.focus_minutes == null ? '--' : summary.focus_minutes;
+            document.getElementById('heartRate').textContent = summary.avg_heart_rate == null ? '--' : Number(summary.avg_heart_rate).toFixed(1);
+            updatePomodoroHint();
+            currentSelectedPomodoroIndex = 0;
+            renderFocusPeriods(summary.focus_periods || []);
+            if (currentTab === 'day' && currentFocusPeriods.length > 0) {
+                updateHrvChartLabel(currentFocusPeriods[0]);
+                renderPomodoroCurve(currentFocusPeriods[0].hrv_points || []);
+            } else {
+                updateHrvChartLabel(null);
+                renderTrendChart(summary.trend_points || []);
+            }
+            renderPiePage(summary);
+        }
+
+        async function loadDashboardData() {
+            const dateKey = formatDateKey(currentDate);
+            const params = new URLSearchParams();
+            if (currentUserId) {
+                params.set('user_id', currentUserId);
+            }
+            params.set('date', dateKey);
+            params.set('period', currentTab);
+            const url = `${API_BASE}/daily_dashboard?${params.toString()}`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                applyDashboard(data);
+                currentRangeLabel = data.range_label || null;
+                currentDate = parseDateKey(data.date || dateKey);
+                updateDateDisplay();
+                return;
+            } catch (error) {
+                currentRangeLabel = currentTab === 'week' ? formatWeekRangeLabel(currentDate) : formatDate(currentDate);
+                renderDashboardError('每日数据读取失败');
+                updateDateDisplay();
+            }
+        }
+
+        function changeDate(delta) {
+            const newDate = new Date(currentDate);
+            newDate.setDate(newDate.getDate() + (currentTab === 'week' ? delta * 7 : delta));
+            
+            const dateKey = formatDateKey(newDate);
+            
+            const limitDate = new Date(today);
+            if (currentTab === 'day') {
+                limitDate.setDate(limitDate.getDate() + 1);
+            } else {
+                limitDate.setDate(limitDate.getDate() + 7);
+            }
+            const limitKey = formatDateKey(limitDate);
+            
+            if (dateKey < limitKey) {
+                currentDate = newDate;
+                updateDateDisplay();
+                loadDashboardData();
+            }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('dayTab').className = 'tab-btn' + (tab === 'day' ? ' active' : '');
+            document.getElementById('weekTab').className = 'tab-btn' + (tab === 'week' ? ' active' : '');
+            
+            currentDate = new Date(today);
+            currentRangeLabel = null;
+            updateDateDisplay();
+            loadDashboardData();
+        }
+
+        function showStatsPage() {
+            document.getElementById('mainPage').style.left = '210px';
+            document.getElementById('statsPage').style.left = '0px';
+            loadDashboardData();
+        }
+
+        function hideStatsPage() {
+            document.getElementById('mainPage').style.left = '0px';
+            document.getElementById('statsPage').style.left = '-210px';
+        }
+
+        function showPiePage() {
+            document.getElementById('statsPage').style.left = '-210px';
+            document.getElementById('piePage').style.left = '0px';
+        }
+
+        function hidePiePage() {
+            document.getElementById('statsPage').style.left = '0px';
+            document.getElementById('piePage').style.left = '210px';
+        }
+
+        function quitApp() {
+            if (typeof require !== 'undefined') {
+                try {
+                    const { ipcRenderer } = require('electron');
+                    ipcRenderer.send('quit-app');
+                } catch (e) {}
+            }
+        }
+
+        const POMODORO_TIME = 25 * 60;
+        const CIRCLE_RADIUS = 50;
+        const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
+
+        let timeLeft = POMODORO_TIME;
+        let isRunning = false;
+        let timerInterval = null;
+
+        const timeDisplay = document.getElementById('timeDisplay');
+        const progressCircle = document.getElementById('progressCircle');
+        const btnContainer = document.getElementById('btnContainer');
+        const status = document.getElementById('status');
+        const pomodoroHint = document.getElementById('pomodoroHint');
+
+        progressCircle.style.strokeDasharray = CIRCLE_CIRCUMFERENCE;
+        progressCircle.style.strokeDashoffset = 0;
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateDisplay() {
+            timeDisplay.textContent = formatTime(timeLeft);
+            const progress = timeLeft / POMODORO_TIME;
+            const offset = CIRCLE_CIRCUMFERENCE * (1 - progress);
+            progressCircle.style.strokeDashoffset = offset;
+        }
+
+        function updatePomodoroHint() {
+            if (!pomodoroHint) return;
+            const completed = Number(currentDashboard?.study_count || 0);
+            const nextIndex = Math.max(1, completed + 1);
+            pomodoroHint.textContent = `今天第 ${nextIndex} 个番茄钟`;
+        }
+
+        function showRunningButtons() {
+            btnContainer.innerHTML = `
+                <button class="btn" onclick="pauseTimer()">||</button>
+                <button class="btn" onclick="restartTimer()">↺</button>
+            `;
+        }
+
+        function showPausedButtons() {
+            btnContainer.innerHTML = `
+                <button class="btn" onclick="resumeTimer()">▶</button>
+                <button class="btn" onclick="restartTimer()">↺</button>
+            `;
+        }
+
+        function showStartButton() {
+            btnContainer.innerHTML = `<button class="btn" onclick="toggleTimer()">▶</button>`;
+        }
+
+        function toggleTimer() {
+            if (timeLeft === 0) timeLeft = POMODORO_TIME;
+            isRunning = true;
+            const task = '专注';
+            status.textContent = `正在${task}...`;
+            showRunningButtons();
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    isRunning = false;
+                    timeLeft = 0;
+                    updateDisplay();
+                    showStartButton();
+                    status.innerHTML = '<span class="completed">🎉 时间到！</span>';
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            status.textContent = '已暂停';
+            showPausedButtons();
+        }
+
+        function resumeTimer() {
+            isRunning = true;
+            const task = '专注';
+            status.textContent = `正在${task}...`;
+            showRunningButtons();
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    isRunning = false;
+                    timeLeft = 0;
+                    updateDisplay();
+                    showStartButton();
+                    status.innerHTML = '<span class="completed">🎉 时间到！</span>';
+                }
+            }, 1000);
+        }
+
+        function restartTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            timeLeft = POMODORO_TIME;
+            updateDisplay();
+            showStartButton();
+            status.textContent = '点击开始专注';
+            updatePomodoroHint();
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            timeLeft = POMODORO_TIME;
+            updateDisplay();
+            showStartButton();
+            status.textContent = '点击开始专注';
+            updatePomodoroHint();
+        }
+
+        updateDisplay();
+        handleResize();
+        updateDateDisplay();
+
+        const savedUserId = localStorage.getItem('focus_user_id');
+        if (savedUserId) {
+            currentUserId = savedUserId;
+            showMainPage();
+            loadDashboardData();
+        } else {
+            showLoginPage();
+            loadLoginUserList();
+        }
+
+        async function loadLoginUserList() {
+            const select = document.getElementById('loginUserSelect');
+            try {
+                const response = await fetch(`${API_BASE}/users`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const users = await response.json();
+                select.innerHTML = users.map(user => `<option value="${user}">${user}</option>`).join('');
+                if (users.length > 0) {
+                    select.value = users[0];
+                }
+            } catch (error) {
+                select.innerHTML = '<option value="">暂无用户</option>';
+            }
+        }
+
+
+
+        if (typeof require !== 'undefined') {
+            try {
+                const { ipcRenderer } = require('electron');
+                ipcRenderer.on('reset-timer', () => resetTimer());
+            } catch (e) {}
+        }
+    </script>
+</body>
+</html>

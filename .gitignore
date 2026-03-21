@@ -1,0 +1,32 @@
+# OS / Editor
+.DS_Store
+.idea/
+.vscode/
+*.iml
+
+# Python cache / build
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Virtual env
+.venv/
+venv/
+env/
+
+# Runtime data / artifacts
+data/processed/
+data/*.db
+*.sqlite3
+
+# Electron build artifacts
+electron-dist/electron-dist/
+electron-dist/node_modules/
