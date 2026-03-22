@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <title></title>
     <style>
+        :root {
+            --primary-solid: #764ba2;
+            --primary-deep: #5f3fa8;
+            --primary-soft: #b99cf7;
+            --primary-gradient: linear-gradient(135deg, #b08cf5 0%, #8b63dc 45%, #6d49b4 100%);
+            --primary-gradient-soft: linear-gradient(135deg, rgba(176, 140, 245, 0.95) 0%, rgba(139, 99, 220, 0.95) 55%, rgba(109, 73, 180, 0.95) 100%);
+        }
+
         html, body {
             background: transparent !important;
             margin: 0 !important;
@@ -154,7 +162,7 @@
 
         .circle-progress circle {
             fill: none;
-            stroke: #764ba2;
+            stroke: url(#timerGradient);
             stroke-width: 5;
             stroke-linecap: round;
             transition: stroke-dashoffset 1s linear;
@@ -189,7 +197,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #764ba2;
+            background: var(--primary-gradient);
+            box-shadow: 0 6px 14px rgba(118, 75, 162, 0.24);
             color: white;
         }
 
@@ -225,6 +234,15 @@
             padding: 0 15px;
             margin-top: auto;
             margin-bottom: 8px;
+        }
+
+        .logout-btn {
+            border: none;
+            background: transparent;
+            color: #8b7ea8;
+            font-size: 8px;
+            cursor: pointer;
+            padding: 0;
         }
 
         .icon-btn {
@@ -276,7 +294,8 @@
         
         .stats-content button,
         .stats-content .stat-col,
-        .stats-content .stats-section {
+        .stats-content .stats-section,
+        .stats-content select {
             -webkit-app-region: no-drag;
         }
 
@@ -303,7 +322,7 @@
         }
 
         .tab-btn.active {
-            background: #764ba2;
+            background: var(--primary-gradient);
             color: white;
         }
 
@@ -315,12 +334,139 @@
             gap: 8px;
         }
 
+        .ym-nav {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 6px;
+            margin-bottom: 10px;
+            padding-left: 10px;
+        }
+
+        .ym-select {
+            border: 1px solid rgba(118, 75, 162, 0.15);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.85);
+            color: #5f4a86;
+            font-size: 8px;
+            padding: 3px 6px;
+            outline: none;
+        }
+
+        .calendar-panel {
+            margin: 4px 10px 10px;
+            padding: 8px 8px 6px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.55);
+            border: 1px solid rgba(118, 75, 162, 0.08);
+        }
+
+        .calendar-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .calendar-title {
+            font-size: 8px;
+            color: #5f4a86;
+            font-weight: 600;
+        }
+
+        .calendar-legend {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 7px;
+            color: #9a92ad;
+        }
+
+        .calendar-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            white-space: nowrap;
+        }
+
+        .calendar-legend-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            background: rgba(118, 75, 162, 0.2);
+        }
+
+        .calendar-legend-dot.has-data {
+            background: var(--primary-solid);
+        }
+
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            margin-bottom: 4px;
+            font-size: 6px;
+            color: #a69bb8;
+            text-align: center;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+
+        .calendar-cell {
+            position: relative;
+            min-height: 20px;
+            border-radius: 5px;
+            font-size: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #8e84a6;
+            background: rgba(118, 75, 162, 0.05);
+            cursor: default;
+            user-select: none;
+        }
+
+        .calendar-cell.blank {
+            background: transparent;
+        }
+
+        .calendar-cell.has-data {
+            background: rgba(118, 75, 162, 0.12);
+            color: #5f3f91;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .calendar-cell.selected {
+            background: var(--primary-gradient);
+            color: #fff;
+        }
+
+        .calendar-cell.disabled {
+            opacity: 0.35;
+        }
+
+        .calendar-cell .dot {
+            position: absolute;
+            bottom: 2px;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--primary-solid);
+        }
+
         .date-btn {
             width: auto;
             height: auto;
             border: none;
             background: transparent;
-            color: #764ba2;
+            color: var(--primary-solid);
             cursor: pointer;
             font-size: 12px;
             padding: 2px 4px;
@@ -479,7 +625,7 @@
 
         .week-point-label {
             font-size: 7px;
-            fill: #764ba2;
+            fill: url(#chartGradient);
             font-weight: 600;
         }
 
@@ -506,7 +652,7 @@
 
         .day-point-label {
             font-size: 7px;
-            fill: #764ba2;
+            fill: url(#chartGradient);
             font-weight: 600;
         }
 
@@ -539,7 +685,7 @@
         }
 
         .period-chip.active {
-            background: #764ba2;
+            background: var(--primary-gradient);
             color: #fff;
             box-shadow: none;
         }
@@ -554,12 +700,12 @@
         }
 
         .period-chip.active.normal {
-            background: #764ba2;
+            background: var(--primary-gradient);
             color: #fff;
         }
 
         .period-chip.active.overload {
-            background: #c97b86;
+            background: linear-gradient(135deg, #d89aa4 0%, #c97b86 100%);
             color: #fff;
         }
 
@@ -603,6 +749,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            background: conic-gradient(#c2a1ff 0 20%, #9a71eb 20% 60%, #6d49b4 60% 100%);
         }
 
         .pie-ring-inner {
@@ -614,7 +761,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: #764ba2;
+            color: var(--primary-solid);
             text-align: center;
         }
 
@@ -653,7 +800,7 @@
         }
 
         .dot.focused {
-            background: #764ba2;
+            background: var(--primary-solid);
         }
 
         .dot.idle {
@@ -748,6 +895,13 @@
                     <div class="main-content">
                         <div class="timer-container" id="timerContainer">
                             <svg class="circle-progress" viewBox="0 0 110 110">
+                                <defs>
+                                    <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#c6a8ff"></stop>
+                                        <stop offset="45%" stop-color="#9a6df0"></stop>
+                                        <stop offset="100%" stop-color="#6d49b4"></stop>
+                                    </linearGradient>
+                                </defs>
                                 <circle cx="55" cy="55" r="50" id="progressCircle"/>
                             </svg>
                             <div class="time-display" id="timeDisplay">25:00</div>
@@ -762,6 +916,7 @@
                         
                         <div class="bottom-bar">
                             <button class="icon-btn" onclick="showStatsPage()">☰</button>
+                            <button class="logout-btn" onclick="logoutUser()">退出登录</button>
                             <button class="icon-btn" onclick="quitApp()">×</button>
                         </div>
                     </div>
@@ -780,6 +935,25 @@
                         <div class="tab-buttons">
                             <button class="tab-btn active" id="dayTab" onclick="switchTab('day')">日</button>
                             <button class="tab-btn" id="weekTab" onclick="switchTab('week')">周</button>
+                        </div>
+
+                        <div class="ym-nav">
+                            <select id="yearSelect" class="ym-select" onchange="changeYearMonth()"></select>
+                            <select id="monthSelect" class="ym-select" onchange="changeYearMonth()"></select>
+                        </div>
+
+                        <div class="calendar-panel">
+                            <div class="calendar-panel-header">
+                                <div class="calendar-title" id="calendarTitle">月历</div>
+                                <div class="calendar-legend">
+                                    <span class="calendar-legend-item"><span class="calendar-legend-dot has-data"></span>有数据</span>
+                                    <span class="calendar-legend-item"><span class="calendar-legend-dot"></span>无数据</span>
+                                </div>
+                            </div>
+                            <div class="calendar-weekdays">
+                                <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+                            </div>
+                            <div class="calendar-grid" id="monthCalendar"></div>
                         </div>
 
                         <div class="date-nav">
@@ -857,6 +1031,32 @@
             document.getElementById('piePage').style.display = 'block';
         }
 
+        function logoutUser() {
+            currentUserId = null;
+            currentDashboard = null;
+            currentTodayPomodoroCount = null;
+            currentFocusPeriods = [];
+            currentSelectedPomodoroIndex = 0;
+            currentRangeLabel = null;
+            currentTab = 'day';
+            currentDate = new Date(today);
+            currentCalendarIndex = {
+                available_dates: [],
+                available_months: [],
+                month_counts: {},
+                years: [],
+                min_date: null,
+                max_date: null,
+            };
+            localStorage.removeItem('focus_user_id');
+            document.getElementById('statsPage').style.left = '-210px';
+            document.getElementById('piePage').style.left = '210px';
+            showLoginPage();
+            updateDateDisplay();
+            updatePomodoroHint();
+            loadLoginUserList();
+        }
+
         async function loginUser() {
             const select = document.getElementById('loginUserSelect');
             const userId = select.value;
@@ -870,7 +1070,8 @@
             localStorage.setItem('focus_user_id', userId);
 
             showMainPage();
-            loadDashboardData();
+            loadTodayPomodoroCount();
+            loadCalendarIndex().then(loadDashboardData);
         }
 
 
@@ -894,6 +1095,15 @@
         let currentRangeLabel = null;
         let currentFocusPeriods = [];
         let currentSelectedPomodoroIndex = 0;
+        let currentTodayPomodoroCount = null;
+        let currentCalendarIndex = {
+            available_dates: [],
+            available_months: [],
+            month_counts: {},
+            years: [],
+            min_date: null,
+            max_date: null,
+        };
 
         const API_BASE = 'http://127.0.0.1:8000';
 
@@ -922,25 +1132,86 @@
             return `${start.getMonth() + 1}月${start.getDate()}日 - ${end.getMonth() + 1}月${end.getDate()}日`;
         }
 
+        function getCalendarDateSet() {
+            return new Set((currentCalendarIndex.available_dates || []).map(String));
+        }
+
+        function getSelectedMonthKey() {
+            const yearSelect = document.getElementById('yearSelect');
+            const monthSelect = document.getElementById('monthSelect');
+            const year = Number(yearSelect?.value || currentDate.getFullYear());
+            const month = Number(monthSelect?.value || currentDate.getMonth() + 1);
+            return `${year}-${String(month).padStart(2, '0')}`;
+        }
+
+        function updateCalendarTitle() {
+            const title = document.getElementById('calendarTitle');
+            if (!title) return;
+            title.textContent = `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月`;
+        }
+
+        function renderMonthCalendar() {
+            const container = document.getElementById('monthCalendar');
+            if (!container) return;
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const firstWeekday = firstDay.getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const selectedKey = formatDateKey(currentDate);
+            const availableDates = getCalendarDateSet();
+
+            const cells = [];
+            for (let i = 0; i < firstWeekday; i++) {
+                cells.push('<div class="calendar-cell blank"></div>');
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateObj = new Date(year, month, day);
+                const dateKey = formatDateKey(dateObj);
+                const hasData = availableDates.has(dateKey);
+                const isSelected = dateKey === selectedKey;
+                const classes = ['calendar-cell'];
+                if (hasData) classes.push('has-data');
+                if (isSelected) classes.push('selected');
+                if (!hasData) classes.push('disabled');
+                const label = day;
+                cells.push(`
+                    <div class="${classes.join(' ')}" data-date="${dateKey}" ${hasData ? `onclick="selectCalendarDate('${dateKey}')"` : ''}>
+                        ${label}
+                        ${hasData ? '<span class="dot"></span>' : ''}
+                    </div>
+                `);
+            }
+
+            container.innerHTML = cells.join('');
+            updateMonthSelectMarks();
+            updateCalendarTitle();
+        }
+
+        function updateMonthSelectMarks() {
+            const monthSelect = document.getElementById('monthSelect');
+            if (!monthSelect) return;
+            const year = currentDate.getFullYear();
+            const counts = currentCalendarIndex.month_counts || {};
+            Array.from(monthSelect.options).forEach(option => {
+                const month = String(option.value).padStart(2, '0');
+                const key = `${year}-${month}`;
+                const count = counts[key] || 0;
+                const baseLabel = `${month}月`;
+                option.textContent = count > 0 ? `${baseLabel} · ${count}` : baseLabel;
+            });
+        }
+
         function updateDateDisplay() {
             const displayText = currentTab === 'week'
                 ? (currentRangeLabel || formatWeekRangeLabel(currentDate))
                 : formatDate(currentDate);
             document.getElementById('dateText').textContent = displayText;
+            syncYearMonthSelectors();
+            renderMonthCalendar();
             updateFocusScoreLabel();
-            
-            const dateKey = formatDateKey(currentDate);
-            const todayKey = formatDateKey(today);
-            
-            const limitDate = new Date(today);
-            if (currentTab === 'day') {
-                limitDate.setDate(limitDate.getDate() + 1);
-            } else {
-                limitDate.setDate(limitDate.getDate() + 7);
-            }
-            const limitKey = formatDateKey(limitDate);
-            
-            document.getElementById('nextDate').className = 'date-btn' + (dateKey >= limitKey ? ' disabled' : '');
         }
 
         function updateFocusScoreLabel() {
@@ -973,11 +1244,13 @@
                 return;
             }
 
-            const width = 170;
-            const height = 84;
-            const paddingLeft = 2;
-            const paddingRight = 20;
-            const paddingY = 7;
+            const accent = '#8b63dc';
+            const width = 150;
+            const height = 72;
+            const paddingLeft = 12;
+            const paddingRight = 12;
+            const paddingTop = 12;
+            const paddingBottom = 14;
             const min = Math.min(...validValues);
             const max = Math.max(...validValues);
             const range = max - min || 1;
@@ -985,52 +1258,54 @@
             const step = points.length > 1 ? plotWidth / (points.length - 1) : 0;
             const coords = points.map((point, index) => {
                 const x = paddingLeft + index * step;
-                const y = height - paddingY - ((Number(point.value ?? 0) - min) / range) * (height - paddingY * 2);
+                const y = height - paddingBottom - ((Number(point.value ?? 0) - min) / range) * (height - paddingTop - paddingBottom);
                 return { x, y, value: point.value ?? 0, time: point.time || point.label || '' };
             });
+            const linePoints = coords.map(point => `${point.x},${point.y}`).join(' ');
 
-            const segments = [];
-            let currentSegment = [];
-            coords.forEach((point) => {
-                if (point) {
-                    currentSegment.push(`${point.x},${point.y}`);
-                } else if (currentSegment.length) {
-                    if (currentSegment.length > 1) segments.push(currentSegment.slice());
-                    currentSegment = [];
-                }
-            });
-            if (currentSegment.length > 1) {
-                segments.push(currentSegment.slice());
-            }
-
-            const lineMarkup = segments.map(segment => `
-                <polyline points="${segment.join(' ')}" fill="none" stroke="#764ba2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+            const dotMarkup = coords.map((point) => `
+                <g>
+                    <circle cx="${point.x}" cy="${point.y}" r="4" fill="${accent}"></circle>
+                    <circle cx="${point.x}" cy="${point.y}" r="7" fill="transparent">
+                        <title>${point.time}: ${Number(point.value).toFixed(1)}</title>
+                    </circle>
+                </g>
             `).join('');
 
-            const dotMarkup = coords.map((point) => {
-                const labelY = index === 0 ? point.y - 12 : (point.y <= 18 ? point.y - 12 : point.y - 8);
+            const labelMarkup = coords.map((point, index) => {
+                const labelTop = Math.max(12, point.y - 12);
+                const labelLeft = Math.min(Math.max(point.x, 8), width - 8);
                 return `
-                    <g>
-                        <circle cx="${point.x}" cy="${point.y}" r="4.5" fill="#764ba2"></circle>
-                        <circle cx="${point.x}" cy="${point.y}" r="7" fill="transparent">
-                            <title>${point.time}: ${Number(point.value).toFixed(1)}</title>
-                        </circle>
-                        <text x="${point.x}" y="${labelY}" text-anchor="middle" class="day-point-label">${Number(point.value).toFixed(1)}</text>
-                    </g>
+                    <div
+                        style="
+                            position:absolute;
+                            left:${labelLeft}px;
+                            top:${labelTop}px;
+                            transform:translate(-50%, -100%);
+                            color:${accent};
+                            font-size:6.5px;
+                            font-weight:600;
+                            line-height:1;
+                            white-space:nowrap;
+                            pointer-events:none;
+                            text-shadow:0 0 2px #fff, 0 0 2px #fff;
+                        "
+                    >${Number(point.value).toFixed(1)}</div>
                 `;
             }).join('');
 
             const axisLabels = coords.map((point) => `
-                <span class="day-axis-label" style="left:${Math.min(Math.max(point.x, 12), width - 18)}px">${point.time}</span>
+                <span class="day-axis-label" style="left:${point.x}px">${point.time}</span>
             `).join('');
 
             container.innerHTML = `
-                <div class="trend-wrap">
-                    <svg class="trend-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
-                        ${lineMarkup}
+                <div class="trend-wrap" style="align-items:center; position:relative; width:${width}px; margin:0 auto;">
+                    <svg class="trend-svg" style="width:${width}px; height:${height}px; display:block; margin:0 auto;" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+                        <polyline points="${linePoints}" fill="none" stroke="${accent}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></polyline>
                         ${dotMarkup}
                     </svg>
-                    <div class="day-axis">${axisLabels}</div>
+                    ${labelMarkup}
+                    <div class="day-axis" style="width:${width}px; margin:0 auto;">${axisLabels}</div>
                 </div>
             `;
         }
@@ -1098,7 +1373,7 @@
                 }
 
                 const lineMarkup = segments.map(segment => `
-                    <polyline points="${segment.join(' ')}" fill="none" stroke="#764ba2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                    <polyline points="${segment.join(' ')}" fill="none" stroke="url(#chartGradient)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
                 `).join('');
 
                 const dotMarkup = coords.map((point, index) => {
@@ -1110,7 +1385,7 @@
                     const labelY = point.y - 8;
                     return `
                         <g>
-                            <circle cx="${point.x}" cy="${point.y}" r="4" fill="#764ba2"></circle>
+                            <circle cx="${point.x}" cy="${point.y}" r="4" fill="url(#chartGradient)"></circle>
                             <circle cx="${point.x}" cy="${point.y}" r="6" fill="transparent">
                                 <title>${label}: ${points[index].value?.toFixed(2) ?? '--'}</title>
                             </circle>
@@ -1127,6 +1402,13 @@
                 container.innerHTML = `
                     <div class="trend-wrap trend-wrap-week">
                         <svg class="trend-svg trend-svg-week" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="chartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#c6a8ff"></stop>
+                                    <stop offset="45%" stop-color="#9a6df0"></stop>
+                                    <stop offset="100%" stop-color="#6d49b4"></stop>
+                                </linearGradient>
+                            </defs>
                             ${lineMarkup}
                             ${dotMarkup}
                         </svg>
@@ -1179,7 +1461,7 @@
                         : paddingLeft + (missingMinutes / (24 * 60)) * plotWidth;
                     return `
                         <g>
-                            <circle cx="${x}" cy="${height / 2 - 2}" r="6.5" fill="#d8d0ea" opacity="0.28"></circle>
+                            <circle cx="${x}" cy="${height / 2 - 2}" r="6.5" fill="rgba(198,168,255,0.25)"></circle>
                             <circle cx="${x}" cy="${height / 2 - 2}" r="9" fill="transparent">
                                 <title>暂无数据</title>
                             </circle>
@@ -1188,7 +1470,7 @@
                 }
                 return `
                     <g>
-                        <circle cx="${point.x}" cy="${point.y}" r="5" fill="#764ba2"></circle>
+                        <circle cx="${point.x}" cy="${point.y}" r="5" fill="url(#chartGradient)"></circle>
                         <circle cx="${point.x}" cy="${point.y}" r="6" fill="transparent">
                             <title>${rawPoint.time || rawPoint.label || ''}: ${Number(point.value).toFixed(1)}</title>
                         </circle>
@@ -1206,6 +1488,13 @@
                 <div class="trend-wrap">
                     <div class="trend-scroll-day">
                         <svg class="trend-svg" style="width:${scrollWidth}px; min-width:${scrollWidth}px;" viewBox="0 0 ${scrollWidth} ${height}" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="chartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#c6a8ff"></stop>
+                                    <stop offset="45%" stop-color="#9a6df0"></stop>
+                                    <stop offset="100%" stop-color="#6d49b4"></stop>
+                                </linearGradient>
+                            </defs>
                             ${dotMarkup}
                         </svg>
                         <div class="day-axis" style="width:${scrollWidth}px;">${axisTicks}</div>
@@ -1308,6 +1597,9 @@
             document.getElementById('totalTime').textContent = summary.total_minutes == null ? '--' : summary.total_minutes;
             document.getElementById('focusTime').textContent = summary.focus_minutes == null ? '--' : summary.focus_minutes;
             document.getElementById('heartRate').textContent = summary.avg_heart_rate == null ? '--' : Number(summary.avg_heart_rate).toFixed(1);
+            if (summary.date === formatDateKey(today)) {
+                currentTodayPomodoroCount = Number(summary.study_count || 0);
+            }
             updatePomodoroHint();
             currentSelectedPomodoroIndex = 0;
             renderFocusPeriods(summary.focus_periods || []);
@@ -1348,33 +1640,113 @@
             }
         }
 
+        async function loadCalendarIndex() {
+            const params = new URLSearchParams();
+            if (currentUserId) {
+                params.set('user_id', currentUserId);
+            }
+            const url = `${API_BASE}/calendar_index?${params.toString()}`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                currentCalendarIndex = await response.json();
+                const availableDates = new Set((currentCalendarIndex.available_dates || []).map(String));
+                if (currentCalendarIndex.min_date && !availableDates.has(formatDateKey(currentDate))) {
+                    currentDate = parseDateKey(currentCalendarIndex.min_date);
+                }
+                populateYearMonthSelectors();
+                renderMonthCalendar();
+            } catch (error) {
+                currentCalendarIndex = {
+                    available_dates: [],
+                    available_months: [],
+                    month_counts: {},
+                    years: [],
+                    min_date: null,
+                    max_date: null,
+                };
+                populateYearMonthSelectors();
+                renderMonthCalendar();
+            }
+        }
+
         function changeDate(delta) {
             const newDate = new Date(currentDate);
             newDate.setDate(newDate.getDate() + (currentTab === 'week' ? delta * 7 : delta));
-            
-            const dateKey = formatDateKey(newDate);
-            
-            const limitDate = new Date(today);
-            if (currentTab === 'day') {
-                limitDate.setDate(limitDate.getDate() + 1);
-            } else {
-                limitDate.setDate(limitDate.getDate() + 7);
+            currentDate = newDate;
+            updateDateDisplay();
+            loadDashboardData();
+        }
+
+        function populateYearMonthSelectors() {
+            const yearSelect = document.getElementById('yearSelect');
+            const monthSelect = document.getElementById('monthSelect');
+            if (!yearSelect || !monthSelect) return;
+
+            const currentYear = currentDate.getFullYear();
+            const currentMonth = currentDate.getMonth() + 1;
+            const yearStart = 2010;
+            const yearEnd = Math.max(2035, currentYear + 1);
+
+            if (!yearSelect.dataset.ready) {
+                yearSelect.innerHTML = '';
+                for (let year = yearStart; year <= yearEnd; year++) {
+                    const option = document.createElement('option');
+                    option.value = String(year);
+                    option.textContent = `${year}年`;
+                    yearSelect.appendChild(option);
+                }
+                yearSelect.dataset.ready = '1';
             }
-            const limitKey = formatDateKey(limitDate);
-            
-            if (dateKey < limitKey) {
-                currentDate = newDate;
-                updateDateDisplay();
-                loadDashboardData();
+
+            if (!monthSelect.dataset.ready) {
+                monthSelect.innerHTML = '';
+                for (let month = 1; month <= 12; month++) {
+                    const option = document.createElement('option');
+                    option.value = String(month);
+                    option.textContent = `${month.toString().padStart(2, '0')}月`;
+                    monthSelect.appendChild(option);
+                }
+                monthSelect.dataset.ready = '1';
             }
+
+            yearSelect.value = String(currentYear);
+            monthSelect.value = String(currentMonth);
+            updateMonthSelectMarks();
+        }
+
+        function syncYearMonthSelectors() {
+            populateYearMonthSelectors();
+        }
+
+        function changeYearMonth() {
+            const yearSelect = document.getElementById('yearSelect');
+            const monthSelect = document.getElementById('monthSelect');
+            if (!yearSelect || !monthSelect) return;
+
+            const year = Number(yearSelect.value || currentDate.getFullYear());
+            const month = Number(monthSelect.value || currentDate.getMonth() + 1);
+            const day = currentDate.getDate();
+            const maxDay = new Date(year, month, 0).getDate();
+            currentDate = new Date(year, month - 1, Math.min(day, maxDay));
+            updateDateDisplay();
+            loadDashboardData();
+        }
+
+        function selectCalendarDate(dateKey) {
+            const availableDates = getCalendarDateSet();
+            if (!availableDates.has(dateKey)) return;
+            currentDate = parseDateKey(dateKey);
+            updateDateDisplay();
+            loadDashboardData();
         }
 
         function switchTab(tab) {
             currentTab = tab;
             document.getElementById('dayTab').className = 'tab-btn' + (tab === 'day' ? ' active' : '');
             document.getElementById('weekTab').className = 'tab-btn' + (tab === 'week' ? ' active' : '');
-            
-            currentDate = new Date(today);
             currentRangeLabel = null;
             updateDateDisplay();
             loadDashboardData();
@@ -1442,9 +1814,35 @@
 
         function updatePomodoroHint() {
             if (!pomodoroHint) return;
-            const completed = Number(currentDashboard?.study_count || 0);
+            const completed = Number(currentTodayPomodoroCount || 0);
             const nextIndex = Math.max(1, completed + 1);
             pomodoroHint.textContent = `今天第 ${nextIndex} 个番茄钟`;
+        }
+
+        async function loadTodayPomodoroCount() {
+            if (!currentUserId) {
+                currentTodayPomodoroCount = null;
+                updatePomodoroHint();
+                return;
+            }
+
+            const todayKey = formatDateKey(today);
+            const params = new URLSearchParams();
+            params.set('user_id', currentUserId);
+            params.set('date', todayKey);
+            params.set('period', 'day');
+
+            try {
+                const response = await fetch(`${API_BASE}/daily_dashboard?${params.toString()}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                currentTodayPomodoroCount = Number(data.study_count || 0);
+            } catch (error) {
+                currentTodayPomodoroCount = 0;
+            }
+            updatePomodoroHint();
         }
 
         function showRunningButtons() {
@@ -1535,13 +1933,15 @@
 
         updateDisplay();
         handleResize();
+        populateYearMonthSelectors();
         updateDateDisplay();
 
         const savedUserId = localStorage.getItem('focus_user_id');
         if (savedUserId) {
             currentUserId = savedUserId;
             showMainPage();
-            loadDashboardData();
+            loadTodayPomodoroCount();
+            loadCalendarIndex().then(loadDashboardData);
         } else {
             showLoginPage();
             loadLoginUserList();

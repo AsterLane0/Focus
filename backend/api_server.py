@@ -37,11 +37,11 @@ app.add_middleware(
 
 init_db()
 
-EXTENDED_RAW_DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "raw" / "virtual_hrv_extended.csv"
+EXTENDED_RAW_DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "raw" / "en_gage_hrv.csv"
 RAW_DATA_PATH = (
     EXTENDED_RAW_DATA_PATH
     if EXTENDED_RAW_DATA_PATH.exists()
-    else Path(__file__).resolve().parent.parent / "data" / "raw" / "senor_hrv_filtered.csv"
+    else Path(__file__).resolve().parent.parent / "data" / "raw" / "en_gage_hrv.csv"
 )
 
 
@@ -105,6 +105,40 @@ def list_users():
     if not daily_data:
         raise HTTPException(status_code=404, detail="No HRV data available")
     return sorted(daily_data.keys())
+
+
+@app.get("/calendar_index", summary="获取用户可用日期索引")
+def calendar_index(user_id: Optional[str] = Query(None, description="用户 ID")):
+    """
+    返回某个用户所有可用日期、月份和年份，供前端做月历高亮。
+    """
+    daily_data = load_and_process_hrv_data(str(RAW_DATA_PATH))
+    if not daily_data:
+        raise HTTPException(status_code=404, detail="No HRV data available")
+
+    selected_user_id = str(user_id) if user_id is not None else sorted(daily_data.keys())[-1]
+    if selected_user_id not in daily_data:
+        raise HTTPException(status_code=404, detail=f"User not found: {selected_user_id}")
+
+    user_data = daily_data[selected_user_id]
+    available_dates = sorted(user_data.keys())
+    month_counts: dict[str, int] = {}
+    years = set()
+    for date_key in available_dates:
+        dt = datetime.strptime(date_key, "%Y-%m-%d")
+        years.add(dt.year)
+        month_key = f"{dt.year}-{dt.month:02d}"
+        month_counts[month_key] = month_counts.get(month_key, 0) + 1
+
+    return {
+        "user_id": selected_user_id,
+        "available_dates": available_dates,
+        "available_months": sorted(month_counts.keys()),
+        "month_counts": month_counts,
+        "years": sorted(years),
+        "min_date": available_dates[0] if available_dates else None,
+        "max_date": available_dates[-1] if available_dates else None,
+    }
 
 
 def format_cn_date(date_str: str) -> str:
