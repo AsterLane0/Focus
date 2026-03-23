@@ -26,6 +26,3 @@ class ReportGenerator:
         """
         return self.generate_report(analysis_dict, recommendation_dict)
 
-    # @staticmethod
-    # def ai_summary():
-    #     API_KEY =

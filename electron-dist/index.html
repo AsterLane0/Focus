@@ -147,17 +147,21 @@
 
         .timer-container {
             position: relative;
-            width: 110px;
-            height: 110px;
-            margin: 5px auto;
+            width: 124px;
+            height: 124px;
+            margin: 2px auto 8px;
+            flex-shrink: 0;
         }
 
         .circle-progress {
             position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             transform: rotate(-90deg);
             transform-origin: center center;
+            display: block;
+            overflow: visible;
         }
 
         .circle-progress circle {
@@ -174,8 +178,13 @@
             left: 50%;
             transform: translate(-50%, -50%);
             color: #222;
-            font-size: 30px;
-            font-weight: 300;
+            font-size: 26px;
+            font-weight: 400;
+            line-height: 1;
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum" 1;
+            z-index: 2;
         }
 
         .btn-container {
@@ -185,6 +194,7 @@
             margin-top: 8px;
             position: relative;
             z-index: 100;
+            flex-shrink: 0;
         }
 
         .btn {
@@ -209,6 +219,7 @@
             font-weight: 500;
             text-align: center;
             width: 100%;
+            flex-shrink: 0;
         }
 
         .pomodoro-hint {
@@ -218,6 +229,102 @@
             text-align: center;
             width: 100%;
             line-height: 1.2;
+            flex-shrink: 0;
+        }
+
+        .ai-preference-wrap {
+            width: 178px;
+            margin-top: 6px;
+            flex-shrink: 0;
+        }
+
+        .ai-preference-toggle {
+            width: 100%;
+            border: none;
+            background: rgba(118, 75, 162, 0.08);
+            color: #6d49b4;
+            border-radius: 10px;
+            font-size: 8px;
+            padding: 6px 8px;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .ai-preference-toggle::after {
+            content: "▾";
+            float: right;
+            color: #8b63dc;
+        }
+
+        .ai-preference-toggle.expanded::after {
+            content: "▴";
+        }
+
+        .ai-preference-body {
+            display: none;
+            position: absolute;
+            inset: 0;
+            z-index: 180;
+            background: rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ai-preference-body.open {
+            display: flex;
+        }
+
+        .ai-preference-modal {
+            width: 178px;
+            padding: 10px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 0 12px 32px rgba(96, 74, 134, 0.18);
+            border: 1px solid rgba(118, 75, 162, 0.12);
+        }
+
+        .ai-preference-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: #6d49b4;
+            font-size: 8px;
+            font-weight: 600;
+        }
+
+        .ai-preference-close {
+            border: none;
+            background: transparent;
+            color: #8b63dc;
+            font-size: 10px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .generate-report-btn {
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            margin-top: 6px;
+            padding: 6px 8px;
+            font-size: 8px;
+            color: #fff;
+            background: var(--primary-gradient);
+            box-shadow: 0 4px 10px rgba(118, 75, 162, 0.18);
+            cursor: pointer;
+        }
+
+        .generate-report-btn.is-generating,
+        .generate-report-btn:disabled {
+            background: linear-gradient(135deg, #cfc8db 0%, #b8b1c6 100%) !important;
+            box-shadow: none !important;
+            color: rgba(255, 255, 255, 0.95);
+            cursor: not-allowed;
+            opacity: 1;
+            filter: grayscale(0.15);
         }
 
         .completed {
@@ -562,6 +669,47 @@
             padding: 10px;
         }
 
+        .ai-analysis-text {
+            font-size: 8px;
+            color: #5f4a86;
+            line-height: 1.55;
+            white-space: pre-wrap;
+            word-break: break-word;
+            min-height: 30px;
+        }
+
+        .ai-analysis-hint {
+            font-size: 7px;
+            color: #9f92b7;
+            margin-top: 4px;
+        }
+
+        .ai-preference-input {
+            width: 100%;
+            min-height: 34px;
+            resize: none;
+            border: 1px solid rgba(118, 75, 162, 0.18);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.72);
+            color: #4d3c73;
+            font-size: 8px;
+            line-height: 1.45;
+            padding: 6px 8px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .ai-preference-input:focus {
+            border-color: rgba(118, 75, 162, 0.4);
+            box-shadow: 0 0 0 1px rgba(118, 75, 162, 0.12);
+        }
+
+        .ai-preference-hint {
+            font-size: 7px;
+            color: #9f92b7;
+            margin-top: 4px;
+        }
+
         .trend-wrap {
             display: flex;
             flex-direction: column;
@@ -654,6 +802,24 @@
             font-size: 7px;
             fill: url(#chartGradient);
             font-weight: 600;
+        }
+
+        .chart-axis-note {
+            font-size: 7px;
+            color: #8b7ea8;
+            margin-bottom: 2px;
+            line-height: 1.2;
+        }
+
+        .chart-value-label {
+            position: absolute;
+            color: #8b63dc;
+            font-size: 6.5px;
+            font-weight: 600;
+            line-height: 1;
+            white-space: nowrap;
+            pointer-events: none;
+            text-shadow: 0 0 2px #fff, 0 0 2px #fff;
         }
 
         .period-item {
@@ -913,11 +1079,34 @@
                         
                         <div class="status" id="status">点击开始专注</div>
                         <div class="pomodoro-hint" id="pomodoroHint">今天第 1 个番茄钟</div>
+
+                        <div class="ai-preference-wrap">
+                            <button class="ai-preference-toggle" id="aiPreferenceToggle" onclick="toggleAiPreferencePanel()">
+                                长期偏好
+                            </button>
+                        </div>
                         
                         <div class="bottom-bar">
                             <button class="icon-btn" onclick="showStatsPage()">☰</button>
                             <button class="logout-btn" onclick="logoutUser()">退出登录</button>
                             <button class="icon-btn" onclick="quitApp()">×</button>
+                        </div>
+                    </div>
+
+                    <div class="ai-preference-body" id="aiPreferenceBody" onclick="closeAiPreferencePanel(event)">
+                        <div class="ai-preference-modal" onclick="event.stopPropagation()">
+                            <div class="ai-preference-modal-header">
+                                <span>长期偏好</span>
+                                <button class="ai-preference-close" onclick="closeAiPreferencePanel()">×</button>
+                            </div>
+                            <textarea
+                                id="aiPreferenceInput"
+                                class="ai-preference-input"
+                                placeholder="比如：今天请更像朋友一点，少说数据，多说建议。"
+                                onkeydown="handleAiPreferenceKeydown(event)"
+                                oninput="handleAiPreferenceInput()"
+                            ></textarea>
+                            <div class="ai-preference-hint" id="aiPreferenceHint">会记住当前用户的偏好</div>
                         </div>
                     </div>
                 </div>
@@ -969,7 +1158,7 @@
                             </div>
                             <span class="view-detail" onclick="showPiePage()">查看详情</span>
                         </div>
-                        
+
                         <div class="stats-row">
                             <div class="stat-col">
                                 <div class="stat-col-label">总时长</div>
@@ -987,7 +1176,25 @@
                                 <div class="stat-col-unit">bpm</div>
                             </div>
                         </div>
-                        
+
+                        <div class="stats-section" id="dailyTaskSection">
+                            <div class="section-label">今日任务</div>
+                            <textarea
+                                id="dailyTaskInput"
+                                class="ai-preference-input"
+                                placeholder="比如：今天主要复习英语，晚上整理笔记。"
+                                oninput="handleDailyTaskInput()"
+                            ></textarea>
+                            <button class="generate-report-btn" id="generateReportBtn" onclick="generateDailyReport()">生成每日报告</button>
+
+                        </div>
+
+                        <div class="stats-section" id="aiAnalysisSection">
+                            <div class="section-label" id="aiAnalysisLabel">学习报告分析</div>
+                            <div class="ai-analysis-text" id="aiAnalysisText">（等待生成中）</div>
+                            <div class="ai-analysis-hint">基于豆包和当前统计结果生成</div>
+                        </div>
+
                         <div class="stats-section">
                             <div class="section-label" id="hrvChartLabel">番茄钟HRV曲线</div>
                             <div class="section-placeholder" id="hrvChart">（折线图待接入）</div>
@@ -1031,10 +1238,73 @@
             document.getElementById('piePage').style.display = 'block';
         }
 
+        function toggleAiPreferencePanel() {
+            const body = document.getElementById('aiPreferenceBody');
+            const toggle = document.getElementById('aiPreferenceToggle');
+            if (!body || !toggle) return;
+            const isOpen = body.classList.toggle('open');
+            toggle.classList.toggle('expanded', isOpen);
+        }
+
+        function closeAiPreferencePanel(event) {
+            if (event) {
+                event.preventDefault();
+            }
+            const body = document.getElementById('aiPreferenceBody');
+            const toggle = document.getElementById('aiPreferenceToggle');
+            if (body) body.classList.remove('open');
+            if (toggle) toggle.classList.remove('expanded');
+        }
+
+        function getDailyReportReadyKey() {
+            const userPart = currentUserId || 'guest';
+            return `focus_daily_report_ready_${userPart}_${formatDateKey(currentDate)}`;
+        }
+
+        function loadDailyReportReady() {
+            const key = getDailyReportReadyKey();
+            currentDailyReportReady = localStorage.getItem(key) === '1';
+        }
+
+        function setDailyReportReady(value) {
+            const key = getDailyReportReadyKey();
+            currentDailyReportReady = !!value;
+            localStorage.setItem(key, currentDailyReportReady ? '1' : '0');
+        }
+
+        function updateGenerateReportButton(isGenerating) {
+            const button = document.getElementById('generateReportBtn');
+            if (!button) return;
+            button.disabled = !!isGenerating;
+            button.classList.toggle('is-generating', !!isGenerating);
+            button.textContent = isGenerating ? '正在生成中' : '生成每日报告';
+        }
+
+        function updateDailyTaskSectionVisibility() {
+            const section = document.getElementById('dailyTaskSection');
+            if (!section) return;
+            section.style.display = currentTab === 'day' ? 'block' : 'none';
+        }
+
         function logoutUser() {
             currentUserId = null;
             currentDashboard = null;
             currentTodayPomodoroCount = null;
+            currentDailyTask = '';
+            currentDailyReportReady = false;
+            currentAiPreference = '';
+            const aiPreferenceBody = document.getElementById('aiPreferenceBody');
+            const aiPreferenceToggle = document.getElementById('aiPreferenceToggle');
+            if (aiPreferenceBody) aiPreferenceBody.classList.remove('open');
+            if (aiPreferenceToggle) aiPreferenceToggle.classList.remove('expanded');
+            if (dailyTaskSaveTimer) {
+                clearTimeout(dailyTaskSaveTimer);
+                dailyTaskSaveTimer = null;
+            }
+            if (aiPreferenceSaveTimer) {
+                clearTimeout(aiPreferenceSaveTimer);
+                aiPreferenceSaveTimer = null;
+            }
             currentFocusPeriods = [];
             currentSelectedPomodoroIndex = 0;
             currentRangeLabel = null;
@@ -1071,6 +1341,9 @@
 
             showMainPage();
             loadTodayPomodoroCount();
+            loadDailyReportReady();
+            loadDailyTaskForCurrentDate();
+            loadAiPreferenceForCurrentUser();
             loadCalendarIndex().then(loadDashboardData);
         }
 
@@ -1096,6 +1369,12 @@
         let currentFocusPeriods = [];
         let currentSelectedPomodoroIndex = 0;
         let currentTodayPomodoroCount = null;
+        let currentDailyTask = '';
+        let currentDailyReportReady = false;
+        let currentDailyReportGenerating = false;
+        let currentAiPreference = '';
+        let dailyTaskSaveTimer = null;
+        let aiPreferenceSaveTimer = null;
         let currentCalendarIndex = {
             available_dates: [],
             available_months: [],
@@ -1212,7 +1491,18 @@
             syncYearMonthSelectors();
             renderMonthCalendar();
             updateFocusScoreLabel();
+            updateDailyTaskSectionVisibility();
+            loadDailyReportReady();
         }
+
+            function updateAiTitle() {
+                const label = document.getElementById("aiAnalysisLabel");
+                if (!label) return;
+
+                label.textContent = currentTab === "day"
+                    ? "今日学习分析"
+                    : "本周学习分析";
+            }
 
         function updateFocusScoreLabel() {
             const label = document.getElementById('focusScoreLabel');
@@ -1230,6 +1520,23 @@
             label.textContent = `${period.start_time} - ${period.end_time} · ${period.state || '正常'}`;
         }
 
+         function renderAiAnalysis(summary) {
+            const text = document.getElementById('aiAnalysisText');
+
+            console.log("🔥 当前tab =", currentTab);
+            console.log("🔥 AI =", summary?.ai_stress_analysis);
+
+            if (!summary) {
+                text.textContent = "暂无分析结果";
+                return;
+            }
+
+            if (currentTab === "day") {
+                text.textContent = summary.ai_stress_analysis || "暂无今日分析";
+            } else if (currentTab === "week") {
+                text.textContent = summary.ai_stress_analysis || "暂无本周分析";
+            }
+        }
         function renderPomodoroCurve(points) {
             const container = document.getElementById('hrvChart');
             if (!points || points.length === 0) {
@@ -1237,7 +1544,7 @@
                 return;
             }
 
-            const values = points.map(point => point.value ?? 0);
+            const values = points.map(point => point.focus ?? point.value ?? 0);
             const validValues = values.filter(value => value !== null && value !== undefined);
             if (validValues.length === 0) {
                 container.innerHTML = '（暂无该番茄钟HRV曲线）';
@@ -1257,9 +1564,10 @@
             const plotWidth = width - paddingLeft - paddingRight;
             const step = points.length > 1 ? plotWidth / (points.length - 1) : 0;
             const coords = points.map((point, index) => {
+                const value = Number(point.focus ?? point.value ?? 0);
                 const x = paddingLeft + index * step;
-                const y = height - paddingBottom - ((Number(point.value ?? 0) - min) / range) * (height - paddingTop - paddingBottom);
-                return { x, y, value: point.value ?? 0, time: point.time || point.label || '' };
+                const y = height - paddingBottom - ((value - min) / range) * (height - paddingTop - paddingBottom);
+                return { x, y, value, time: point.time || point.label || '' };
             });
             const linePoints = coords.map(point => `${point.x},${point.y}`).join(' ');
 
@@ -1273,23 +1581,14 @@
             `).join('');
 
             const labelMarkup = coords.map((point, index) => {
-                const labelTop = Math.max(12, point.y - 12);
+                const placeBelow = point.y < paddingTop + 16;
+                const labelTop = placeBelow ? point.y + 8 : point.y - 8;
+                const labelTransform = placeBelow ? 'translate(-50%, 0)' : 'translate(-50%, -100%)';
                 const labelLeft = Math.min(Math.max(point.x, 8), width - 8);
                 return `
                     <div
-                        style="
-                            position:absolute;
-                            left:${labelLeft}px;
-                            top:${labelTop}px;
-                            transform:translate(-50%, -100%);
-                            color:${accent};
-                            font-size:6.5px;
-                            font-weight:600;
-                            line-height:1;
-                            white-space:nowrap;
-                            pointer-events:none;
-                            text-shadow:0 0 2px #fff, 0 0 2px #fff;
-                        "
+                        class="chart-value-label"
+                        style="left:${labelLeft}px; top:${labelTop}px; transform:${labelTransform};"
                     >${Number(point.value).toFixed(1)}</div>
                 `;
             }).join('');
@@ -1300,6 +1599,7 @@
 
             container.innerHTML = `
                 <div class="trend-wrap" style="align-items:center; position:relative; width:${width}px; margin:0 auto;">
+                    <div class="chart-axis-note" style="width:${width}px; text-align:left;">纵轴：专注评分</div>
                     <svg class="trend-svg" style="width:${width}px; height:${height}px; display:block; margin:0 auto;" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
                         <polyline points="${linePoints}" fill="none" stroke="${accent}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></polyline>
                         ${dotMarkup}
@@ -1382,15 +1682,29 @@
                         return `<circle cx="${paddingLeft + index * stepX}" cy="${height / 2}" r="2.5" fill="#d9ccea" opacity="0.4"></circle>`;
                     }
                     const valueLabel = points[index].value?.toFixed(1) ?? '--';
-                    const labelY = point.y - 8;
+                    const placeBelow = point.y < paddingY + 16;
+                    const labelY = placeBelow ? point.y + 8 : point.y - 8;
                     return `
                         <g>
                             <circle cx="${point.x}" cy="${point.y}" r="4" fill="url(#chartGradient)"></circle>
                             <circle cx="${point.x}" cy="${point.y}" r="6" fill="transparent">
                                 <title>${label}: ${points[index].value?.toFixed(2) ?? '--'}</title>
                             </circle>
-                            <text x="${point.x}" y="${labelY}" text-anchor="middle" class="week-point-label">${valueLabel}</text>
                         </g>
+                    `;
+                }).join('');
+
+                const labelMarkup = coords.map((point, index) => {
+                    if (!point) return '';
+                    const valueLabel = points[index].value?.toFixed(1) ?? '--';
+                    const placeBelow = point.y < paddingY + 16;
+                    const labelTop = placeBelow ? point.y + 8 : point.y - 8;
+                    const labelTransform = placeBelow ? 'translate(-50%, 0)' : 'translate(-50%, -100%)';
+                    return `
+                        <div
+                            class="chart-value-label"
+                            style="left:${point.x}px; top:${labelTop}px; transform:${labelTransform};"
+                        >${valueLabel}</div>
                     `;
                 }).join('');
 
@@ -1401,6 +1715,7 @@
 
                 container.innerHTML = `
                     <div class="trend-wrap trend-wrap-week">
+                        <div class="chart-axis-note">纵轴：专注评分</div>
                         <svg class="trend-svg trend-svg-week" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
                             <defs>
                                 <linearGradient id="chartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -1412,6 +1727,7 @@
                             ${lineMarkup}
                             ${dotMarkup}
                         </svg>
+                        ${labelMarkup}
                         <div class="trend-axis">${axisLabels}</div>
                         <div class="trend-meta">
                             <span>最低 ${Math.min(...validValues).toFixed(2)}</span>
@@ -1485,7 +1801,8 @@
             }).join('');
 
             container.innerHTML = `
-                <div class="trend-wrap">
+                    <div class="trend-wrap">
+                    <div class="chart-axis-note">纵轴：专注评分</div>
                     <div class="trend-scroll-day">
                         <svg class="trend-svg" style="width:${scrollWidth}px; min-width:${scrollWidth}px;" viewBox="0 0 ${scrollWidth} ${height}" preserveAspectRatio="none">
                             <defs>
@@ -1585,6 +1902,7 @@
             document.getElementById('totalTime').textContent = '--';
             document.getElementById('focusTime').textContent = '--';
             document.getElementById('heartRate').textContent = '--';
+            renderAiAnalysis(null);
             document.getElementById('focusPeriods').innerHTML = `（${message || '暂无可用数据'}）`;
             updateHrvChartLabel(null);
             document.getElementById('hrvChart').innerHTML = `（${message || '暂无可用数据'}）`;
@@ -1597,10 +1915,13 @@
             document.getElementById('totalTime').textContent = summary.total_minutes == null ? '--' : summary.total_minutes;
             document.getElementById('focusTime').textContent = summary.focus_minutes == null ? '--' : summary.focus_minutes;
             document.getElementById('heartRate').textContent = summary.avg_heart_rate == null ? '--' : Number(summary.avg_heart_rate).toFixed(1);
+            syncDailyTaskInput(summary.user_daily_task || currentDailyTask || '');
+            syncAiPreferenceInput(summary.user_ai_preference || currentAiPreference || '');
             if (summary.date === formatDateKey(today)) {
                 currentTodayPomodoroCount = Number(summary.study_count || 0);
             }
             updatePomodoroHint();
+            renderAiAnalysis(summary);
             currentSelectedPomodoroIndex = 0;
             renderFocusPeriods(summary.focus_periods || []);
             if (currentTab === 'day' && currentFocusPeriods.length > 0) {
@@ -1613,7 +1934,8 @@
             renderPiePage(summary);
         }
 
-        async function loadDashboardData() {
+        async function loadDashboardData(options = {}) {
+            const { generateReport = false } = options;
             const dateKey = formatDateKey(currentDate);
             const params = new URLSearchParams();
             if (currentUserId) {
@@ -1621,6 +1943,9 @@
             }
             params.set('date', dateKey);
             params.set('period', currentTab);
+            if (currentTab === 'day' && generateReport) {
+                params.set('generate_report', '1');
+            }
             const url = `${API_BASE}/daily_dashboard?${params.toString()}`;
             try {
                 const response = await fetch(url);
@@ -1632,11 +1957,13 @@
                 currentRangeLabel = data.range_label || null;
                 currentDate = parseDateKey(data.date || dateKey);
                 updateDateDisplay();
-                return;
+                return true;
             } catch (error) {
                 currentRangeLabel = currentTab === 'week' ? formatWeekRangeLabel(currentDate) : formatDate(currentDate);
                 renderDashboardError('每日数据读取失败');
+                loadDailyTaskForCurrentDate();
                 updateDateDisplay();
+                return false;
             }
         }
 
@@ -1677,6 +2004,7 @@
             newDate.setDate(newDate.getDate() + (currentTab === 'week' ? delta * 7 : delta));
             currentDate = newDate;
             updateDateDisplay();
+            loadDailyTaskForCurrentDate();
             loadDashboardData();
         }
 
@@ -1732,6 +2060,7 @@
             const maxDay = new Date(year, month, 0).getDate();
             currentDate = new Date(year, month - 1, Math.min(day, maxDay));
             updateDateDisplay();
+            loadDailyTaskForCurrentDate();
             loadDashboardData();
         }
 
@@ -1740,15 +2069,23 @@
             if (!availableDates.has(dateKey)) return;
             currentDate = parseDateKey(dateKey);
             updateDateDisplay();
+            loadDailyTaskForCurrentDate();
             loadDashboardData();
         }
 
         function switchTab(tab) {
             currentTab = tab;
+
             document.getElementById('dayTab').className = 'tab-btn' + (tab === 'day' ? ' active' : '');
             document.getElementById('weekTab').className = 'tab-btn' + (tab === 'week' ? ' active' : '');
+
+            updateAiTitle();
+
+            document.getElementById('aiAnalysisText').textContent = "加载中...";
+
             currentRangeLabel = null;
             updateDateDisplay();
+            loadDailyTaskForCurrentDate();
             loadDashboardData();
         }
 
@@ -1941,6 +2278,10 @@
             currentUserId = savedUserId;
             showMainPage();
             loadTodayPomodoroCount();
+            loadDailyReportReady();
+            loadDailyTaskForCurrentDate();
+            loadAiPreferenceForCurrentUser();
+            updateAiTitle();
             loadCalendarIndex().then(loadDashboardData);
         } else {
             showLoginPage();
@@ -1964,7 +2305,248 @@
             }
         }
 
+        function syncAiPreferenceInput(value) {
+            const input = document.getElementById('aiPreferenceInput');
+            const hint = document.getElementById('aiPreferenceHint');
+            currentAiPreference = value || '';
+            if (input && input.value !== currentAiPreference) {
+                input.value = currentAiPreference;
+            }
+            if (hint) {
+                hint.textContent = currentAiPreference
+                    ? '这句话会跟着当前用户一起记住'
+                    : '会记住当前用户的偏好';
+            }
+        }
 
+        async function loadAiPreferenceForCurrentUser() {
+            const input = document.getElementById('aiPreferenceInput');
+            const hint = document.getElementById('aiPreferenceHint');
+            if (!input || !currentUserId) {
+                syncAiPreferenceInput('');
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams();
+                params.set('user_id', currentUserId);
+                const response = await fetch(`${API_BASE}/user_ai_preference?${params.toString()}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                syncAiPreferenceInput(data.preference_text || '');
+            } catch (error) {
+                syncAiPreferenceInput('');
+                if (hint) {
+                    hint.textContent = '暂时读取不到偏好，先直接输入也可以';
+                }
+            }
+        }
+
+        function syncDailyTaskInput(value) {
+            const input = document.getElementById('dailyTaskInput');
+            const hint = document.getElementById('dailyTaskHint');
+            currentDailyTask = value || '';
+            if (input && input.value !== currentDailyTask) {
+                input.value = currentDailyTask;
+            }
+            if (hint) {
+                hint.textContent = currentDailyTask
+                    ? '这一天的任务会一起记住'
+                    : '会和今天的分析一起记住';
+            }
+        }
+
+        async function loadDailyTaskForCurrentDate() {
+            const input = document.getElementById('dailyTaskInput');
+            const hint = document.getElementById('dailyTaskHint');
+            if (!input || !currentUserId) {
+                syncDailyTaskInput('');
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams();
+                params.set('user_id', currentUserId);
+                params.set('task_date', formatDateKey(currentDate));
+                const response = await fetch(`${API_BASE}/user_daily_task?${params.toString()}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                syncDailyTaskInput(data.task_text || '');
+            } catch (error) {
+                syncDailyTaskInput('');
+                if (hint) {
+                    hint.textContent = '暂时读取不到任务，先直接输入也可以';
+                }
+            }
+        }
+
+        function handleDailyTaskInput() {
+            const input = document.getElementById('dailyTaskInput');
+            if (!input) return;
+            currentDailyTask = input.value || '';
+            const hint = document.getElementById('dailyTaskHint');
+            if (hint) {
+                hint.textContent = currentDailyTask
+                    ? '正在保存这一天的任务'
+                    : '会和今天的分析一起记住';
+            }
+
+            setDailyReportReady(false);
+            currentDailyReportGenerating = false;
+            updateGenerateReportButton(false);
+
+            if (!currentUserId) return;
+            if (dailyTaskSaveTimer) {
+                clearTimeout(dailyTaskSaveTimer);
+            }
+            dailyTaskSaveTimer = setTimeout(() => {
+                saveDailyTask(currentDailyTask, { refreshDashboard: false });
+            }, 500);
+        }
+
+        async function saveDailyTask(taskText, options = {}) {
+            const { refreshDashboard = true } = options;
+            if (!currentUserId) return;
+            try {
+                const response = await fetch(`${API_BASE}/user_daily_task`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUserId,
+                        task_date: formatDateKey(currentDate),
+                        task_text: taskText || '',
+                    }),
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const hint = document.getElementById('dailyTaskHint');
+                if (hint) {
+                    hint.textContent = taskText
+                        ? '已记住这一天的任务'
+                        : '会和今天的分析一起记住';
+                }
+                if (refreshDashboard) {
+                    loadDashboardData();
+                }
+            } catch (error) {
+                const hint = document.getElementById('dailyTaskHint');
+                if (hint) {
+                    hint.textContent = '保存失败了，但还能继续用';
+                }
+            }
+        }
+
+        async function generateDailyReport() {
+            if (!currentUserId) return;
+            const taskText = (currentDailyTask || '').trim();
+            if (!taskText) {
+                const hint = document.getElementById('dailyTaskHint');
+                if (hint) {
+                    hint.textContent = '先写今天任务，再点生成每日报告';
+                }
+                return;
+            }
+
+            currentDailyReportGenerating = true;
+            updateGenerateReportButton(true);
+            setDailyReportReady(false);
+
+            try {
+                // Yield one frame so the disabled style/text can paint before network work starts.
+                await new Promise(resolve => requestAnimationFrame(resolve));
+                await saveDailyTask(taskText, { refreshDashboard: false });
+                const success = await loadDashboardData({ generateReport: true });
+                setDailyReportReady(!!success);
+            } finally {
+                currentDailyReportGenerating = false;
+                updateGenerateReportButton(false);
+            }
+        }
+
+        function handleAiPreferenceInput() {
+            const input = document.getElementById('aiPreferenceInput');
+            if (!input) return;
+            currentAiPreference = input.value || '';
+            const hint = document.getElementById('aiPreferenceHint');
+            if (hint) {
+                hint.textContent = currentAiPreference
+                    ? '正在保存这句话到当前用户'
+                    : '会记住当前用户的偏好';
+            }
+
+            if (!currentUserId) return;
+            if (aiPreferenceSaveTimer) {
+                clearTimeout(aiPreferenceSaveTimer);
+            }
+            aiPreferenceSaveTimer = setTimeout(() => {
+                saveAiPreference(currentAiPreference);
+            }, 500);
+        }
+
+        function handleAiPreferenceKeydown(event) {
+            if (!event) return;
+            if (event.key !== 'Enter' || event.shiftKey) {
+                return;
+            }
+
+            event.preventDefault();
+            const input = document.getElementById('aiPreferenceInput');
+            if (!input) return;
+
+            const preferenceText = input.value || '';
+            if (aiPreferenceSaveTimer) {
+                clearTimeout(aiPreferenceSaveTimer);
+                aiPreferenceSaveTimer = null;
+            }
+
+            saveAiPreference(preferenceText);
+            input.value = '';
+            currentAiPreference = '';
+            const hint = document.getElementById('aiPreferenceHint');
+            if (hint) {
+                hint.textContent = preferenceText
+                    ? '已记住当前用户的偏好'
+                    : '会记住当前用户的偏好';
+            }
+            closeAiPreferencePanel();
+        }
+
+        async function saveAiPreference(preferenceText) {
+            if (!currentUserId) return;
+            try {
+                const response = await fetch(`${API_BASE}/user_ai_preference`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUserId,
+                        preference_text: preferenceText || '',
+                    }),
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const hint = document.getElementById('aiPreferenceHint');
+                if (hint) {
+                    hint.textContent = preferenceText
+                        ? '已记住当前用户的这句话'
+                        : '会记住当前用户的偏好';
+                }
+            } catch (error) {
+                const hint = document.getElementById('aiPreferenceHint');
+                if (hint) {
+                    hint.textContent = '保存失败了，但还能继续用';
+                }
+            }
+        }
 
         if (typeof require !== 'undefined') {
             try {

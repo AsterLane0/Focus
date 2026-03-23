@@ -1,4 +1,9 @@
 # backend/api_server.py
+import hashlib
+import json
+import os
+
+import requests
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -9,7 +14,17 @@ import logging
 from pathlib import Path
 from statistics import mean, median
 
-from .database import init_db, create_session, update_session, get_session, get_all_sessions
+from .database import (
+    init_db,
+    create_session,
+    update_session,
+    get_session,
+    get_all_sessions,
+    get_user_ai_preference,
+    upsert_user_ai_preference,
+    get_user_daily_task,
+    upsert_user_daily_task,
+)
 from src.data_loader import load_and_process_hrv_data
 from analysis.focus_model import FocusModel
 from analysis.learning_analysis import LearningAnalysis
@@ -43,6 +58,75 @@ RAW_DATA_PATH = (
     if EXTENDED_RAW_DATA_PATH.exists()
     else Path(__file__).resolve().parent.parent / "data" / "raw" / "en_gage_hrv.csv"
 )
+
+_HRV_DATA_CACHE: dict | None = None
+_HRV_DATA_CACHE_SOURCE: tuple[str, float, int] | None = None
+_AI_ANALYSIS_CACHE: dict[str, str] = {}
+
+
+def get_cached_hrv_data() -> dict:
+    """读取并缓存原始 HRV 数据，避免每次请求都重新解析整份 CSV。"""
+    global _HRV_DATA_CACHE, _HRV_DATA_CACHE_SOURCE
+    print("🔥 DEBUG: RAW_DATA_PATH =", RAW_DATA_PATH)
+    print("🔥 DEBUG: 文件存在吗 =", RAW_DATA_PATH.exists())
+    try:
+        stat = RAW_DATA_PATH.stat()
+    except FileNotFoundError:
+        _HRV_DATA_CACHE = None
+        _HRV_DATA_CACHE_SOURCE = None
+        return {}
+
+    source = (str(RAW_DATA_PATH), stat.st_mtime, stat.st_size)
+    if _HRV_DATA_CACHE is None or _HRV_DATA_CACHE_SOURCE != source:
+        _HRV_DATA_CACHE = load_and_process_hrv_data(str(RAW_DATA_PATH))
+        _HRV_DATA_CACHE_SOURCE = source
+    return _HRV_DATA_CACHE or {}
+
+
+def _make_ai_analysis_cache_key(
+    *,
+    period_label: str,
+    display_label: str,
+    user_id: str,
+    analysis_result: dict,
+    recommendation: dict,
+    profile_summary: str,
+    user_preference: str,
+    task_summary: str,
+    summary_text: str,
+    focus_periods: list["FocusPeriod"] | None,
+) -> str:
+    """把 AI 输入压成一个稳定的缓存键。"""
+    focus_signature: list[dict] = []
+    for period in focus_periods or []:
+        try:
+            focus_signature.append(period.model_dump(exclude={"hrv_points"}))
+        except Exception:
+            focus_signature.append(
+                {
+                    "start_time": getattr(period, "start_time", ""),
+                    "end_time": getattr(period, "end_time", ""),
+                    "stress": getattr(period, "stress", 0.0),
+                    "focus": getattr(period, "focus", 0.0),
+                    "duration_minutes": getattr(period, "duration_minutes", 0),
+                    "state": getattr(period, "state", "正常"),
+                }
+            )
+
+    payload = {
+        "period_label": period_label,
+        "display_label": display_label,
+        "user_id": user_id,
+        "analysis_result": analysis_result,
+        "recommendation": recommendation,
+        "profile_summary": profile_summary,
+        "user_preference": user_preference,
+        "task_summary": task_summary,
+        "summary_text": summary_text,
+        "focus_periods": focus_signature,
+    }
+    raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)
+    return hashlib.sha1(raw.encode("utf-8")).hexdigest()
 
 
 class TrendPoint(BaseModel):
@@ -91,9 +175,25 @@ class DailyDashboard(BaseModel):
     focus_minutes: int
     avg_heart_rate: float
     recommendation: dict
+    ai_stress_analysis: Optional[str] = None
+    user_ai_preference: Optional[str] = None
+    user_daily_task: Optional[str] = None
     trend_points: List[TrendPoint]
     focus_periods: List[FocusPeriod]
     recent_sessions: List[RecentSession]
+
+
+class UserAIPreference(BaseModel):
+    user_id: str
+    preference_text: str = ""
+    updated_at: Optional[str] = None
+
+
+class UserDailyTask(BaseModel):
+    user_id: str
+    task_date: str
+    task_text: str = ""
+    updated_at: Optional[str] = None
 
 
 @app.get("/users", summary="获取可用用户列表", response_model=List[str])
@@ -101,7 +201,7 @@ def list_users():
     """
     返回当前 HRV 数据里存在的所有用户 ID。
     """
-    daily_data = load_and_process_hrv_data(str(RAW_DATA_PATH))
+    daily_data = get_cached_hrv_data()
     if not daily_data:
         raise HTTPException(status_code=404, detail="No HRV data available")
     return sorted(daily_data.keys())
@@ -112,7 +212,7 @@ def calendar_index(user_id: Optional[str] = Query(None, description="用户 ID")
     """
     返回某个用户所有可用日期、月份和年份，供前端做月历高亮。
     """
-    daily_data = load_and_process_hrv_data(str(RAW_DATA_PATH))
+    daily_data = get_cached_hrv_data()
     if not daily_data:
         raise HTTPException(status_code=404, detail="No HRV data available")
 
@@ -138,6 +238,81 @@ def calendar_index(user_id: Optional[str] = Query(None, description="用户 ID")
         "years": sorted(years),
         "min_date": available_dates[0] if available_dates else None,
         "max_date": available_dates[-1] if available_dates else None,
+    }
+
+
+@app.get("/user_ai_preference", summary="获取用户 AI 记忆")
+def read_user_ai_preference(user_id: str = Query(..., description="用户 ID")):
+    """读取某个用户保存的 AI 个人偏好。"""
+    row = get_user_ai_preference(str(user_id))
+    if not row:
+        return {
+            "user_id": str(user_id),
+            "preference_text": "",
+            "updated_at": None,
+        }
+
+    return {
+        "user_id": row[0],
+        "preference_text": row[1] or "",
+        "updated_at": row[2],
+    }
+
+
+@app.post("/user_ai_preference", summary="保存用户 AI 记忆")
+def save_user_ai_preference(payload: UserAIPreference):
+    """保存某个用户的 AI 个人偏好。"""
+    user_id = str(payload.user_id).strip()
+    preference_text = str(payload.preference_text or "").strip()
+    updated_at = payload.updated_at or datetime.now().isoformat(timespec="seconds")
+    success = upsert_user_ai_preference(user_id, preference_text, updated_at)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to save AI preference")
+    return {
+        "user_id": user_id,
+        "preference_text": preference_text,
+        "updated_at": updated_at,
+    }
+
+
+@app.get("/user_daily_task", summary="获取用户当天任务")
+def read_user_daily_task(
+    user_id: str = Query(..., description="用户 ID"),
+    task_date: str = Query(..., description="YYYY-MM-DD"),
+):
+    """读取某个用户某一天填写的任务。"""
+    row = get_user_daily_task(str(user_id), str(task_date))
+    if not row:
+        return {
+            "user_id": str(user_id),
+            "task_date": str(task_date),
+            "task_text": "",
+            "updated_at": None,
+        }
+
+    return {
+        "user_id": row[0],
+        "task_date": row[1],
+        "task_text": row[2] or "",
+        "updated_at": row[3],
+    }
+
+
+@app.post("/user_daily_task", summary="保存用户当天任务")
+def save_user_daily_task(payload: UserDailyTask):
+    """保存某个用户某一天的任务。"""
+    user_id = str(payload.user_id).strip()
+    task_date = str(payload.task_date).strip()
+    task_text = str(payload.task_text or "").strip()
+    updated_at = payload.updated_at or datetime.now().isoformat(timespec="seconds")
+    success = upsert_user_daily_task(user_id, task_date, task_text, updated_at)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to save daily task")
+    return {
+        "user_id": user_id,
+        "task_date": task_date,
+        "task_text": task_text,
+        "updated_at": updated_at,
     }
 
 
@@ -167,6 +342,499 @@ def evaluate_pomodoro_state(stress_avg: float, focus_avg: float) -> str:
     if stress_avg > 60 and focus_avg < 40:
         return "压力过大"
     return "正常"
+
+
+def _format_float_value(value: Optional[float], digits: int = 1) -> str:
+    if value is None:
+        return "--"
+    try:
+        return f"{float(value):.{digits}f}"
+    except (TypeError, ValueError):
+        return "--"
+
+
+def _build_local_ai_pressure_analysis(
+    *,
+    period_label: str,
+    display_label: str,
+    user_id: str,
+    analysis_result: dict,
+    recommendation: dict,
+    summary_text: str,
+) -> str:
+    stress_trend = str(analysis_result.get("stress_trend") or "no data")
+    focus_trend = str(analysis_result.get("focus_trend") or "no data")
+    state = str(recommendation.get("state") or "正常状态")
+    task_text = str(summary_text or "").strip()
+    advice_text = str(recommendation.get("advice") or "可以先放慢一点，别把自己逼太紧。").strip()
+
+    state_phrase = {
+        "压力过载": "整体有点绷",
+        "疲惫状态": "看起来有点累",
+        "状态优秀": "状态挺在线",
+        "状态良好": "今天节奏还不错",
+        "正常状态": "今天整体还算稳",
+    }.get(state, "今天整体还算稳")
+
+    stress_phrase = {
+        "increasing": "压力是往上走的",
+        "decreasing": "压力有慢慢缓下来",
+        "stable": "压力没有太大波动",
+        "insufficient data": "压力变化暂时还不好判断",
+        "no data": "暂时还看不出明显压力变化",
+    }.get(stress_trend, "压力没有太大波动")
+
+    focus_phrase = {
+        "improving": "专注状态在往好走",
+        "declining": "专注有点往下掉",
+        "stable": "专注状态比较稳",
+        "insufficient data": "专注变化暂时还不好判断",
+        "no data": "暂时还看不出明显专注变化",
+    }.get(focus_trend, "专注状态比较稳")
+
+    parts = []
+    if task_text:
+        parts.append(f"你今天主要在忙的是：{task_text}。")
+    parts.append(f"这一天整体{state_phrase}，{stress_phrase}，{focus_phrase}。")
+    parts.append("这种状态并不差差，但也不是那种可以完全放空的一天，还是得一边推进一边照顾节奏。")
+    parts.append(f"接下来可以先试试：{advice_text}")
+    return "\n\n".join(part for part in parts if part)
+
+
+def _build_daily_prompt(
+    *,
+    display_label: str,
+    user_id: str,
+    analysis_result: dict,
+    recommendation: dict,
+    profile_summary: str,
+    user_preference: str,
+    task_summary: str,
+) -> str:
+
+    stress_average = _format_float_value(analysis_result.get("stress_average"))
+    focus_average = _format_float_value(analysis_result.get("focus_average"))
+    study_count = int(analysis_result.get("study_count") or 0)
+    stress_trend = str(analysis_result.get("stress_trend") or "no data")
+    focus_trend = str(analysis_result.get("focus_trend") or "no data")
+
+    state = str(recommendation.get("state") or "正常状态")
+
+    return f"""
+你是一个理性但不冷冰冰的学习分析者，说话像一个会认真观察人的朋友。
+
+【用户风格偏好】
+{user_preference or "无明显偏好"}
+
+【这个人的长期状态】
+{profile_summary}
+
+⚠️ 注意：这是“今天”的数据，绝对不要出现“一周、本周”等词。
+
+任务：{task_summary}
+当前状态：{state}
+压力：{stress_average}
+专注：{focus_average}
+趋势：压力{stress_trend}，专注{focus_trend}
+学习次数：{study_count}
+
+要求：
+- 不要复述数据
+- 不要鼓励（不要“加油”）
+- 重点解释“为什么会这样”
+- 只说1-2个关键点
+
+结构：
+1️⃣ 先判断今天状态（一句话）
+2️⃣ 解释原因（结合任务 + 状态变化）
+3️⃣ 给一个具体可执行建议
+
+输出：3-4句自然中文
+"""
+
+def _build_weekly_prompt(
+    *,
+    display_label: str,
+    analysis_result: dict,
+    recommendation: dict,
+    profile_summary: str,
+    user_preference: str,
+) -> str:
+
+    stress_average = _format_float_value(analysis_result.get("stress_average"))
+    focus_average = _format_float_value(analysis_result.get("focus_average"))
+    study_count = int(analysis_result.get("study_count") or 0)
+    stress_trend = str(analysis_result.get("stress_trend") or "no data")
+    focus_trend = str(analysis_result.get("focus_trend") or "no data")
+
+    return f"""
+你是一个理性但不冷冰冰的学习分析者，说话像一个会认真观察人的朋友。
+
+【用户风格偏好】
+{user_preference or "无明显偏好"}
+
+【这个人的长期状态】
+{profile_summary}
+
+⚠️ 注意：这是“一个星期”的整体趋势分析，不是某一天。
+
+时间范围：{display_label}
+平均压力：{stress_average}
+平均专注：{focus_average}
+趋势：压力{stress_trend}，专注{focus_trend}
+学习次数：{study_count}
+
+要求：
+- 不要逐天复述
+- 抓整体趋势
+- 找一个核心问题
+- 解释“为什么这一周会这样”
+- 给一个下周可执行建议
+
+输出：3-4句自然中文
+"""
+
+def _extract_doubao_response_text(data):
+    try:
+        return data["choices"][0]["message"]["content"]
+    except Exception:
+        return None
+
+    choices = payload.get("choices")
+    if isinstance(choices, list) and choices:
+        first = choices[0] if isinstance(choices[0], dict) else {}
+        message = first.get("message", {})
+        if isinstance(message, dict):
+            content = message.get("content")
+            if isinstance(content, str) and content.strip():
+                return content.strip()
+
+    return ""
+
+
+def _build_user_profile_summary(
+    *,
+    user_data: dict,
+    reference_dates: list[str],
+    current_stress_average: Optional[float],
+    current_focus_average: Optional[float],
+) -> dict:
+    """从历史记录里提炼出用户画像（结构化 + 文本）"""
+
+    if not reference_dates:
+        return {
+            "habit": [],
+            "comparison": [],
+            "baseline_focus": None,
+            "baseline_stress": None,
+            "learning_type": None,
+            "text": "暂时还没有足够的历史记录来提炼这个人的个人节奏。"
+        }
+
+    baseline_stress_list = []
+    baseline_focus_list = []
+    active_hours = []
+    daily_session_counts = []
+
+    # ====== 1. 收集历史数据 ======
+    for date_key in reference_dates:
+        history_dict = user_data.get(date_key)
+        if not history_dict or not history_dict.get("time") or not history_dict.get("hr"):
+            continue
+
+        for time_text in history_dict.get("time", []):
+            try:
+                active_hours.append(parse_clock_time(time_text).hour)
+            except ValueError:
+                continue
+
+        focus_periods, score_list, _ = build_pomodoro_periods(history_dict)
+
+        if score_list:
+            baseline_stress_list.extend(float(item.get("stress") or 0.0) for item in score_list)
+            baseline_focus_list.extend(float(item.get("focus") or 0.0) for item in score_list)
+            daily_session_counts.append(len(score_list))
+        elif focus_periods:
+            baseline_stress_list.extend(float(period.stress) for period in focus_periods)
+            baseline_focus_list.extend(float(period.focus) for period in focus_periods)
+            daily_session_counts.append(len(focus_periods))
+
+    # ====== 2. 没数据直接返回 ======
+    if not baseline_stress_list or not baseline_focus_list:
+        return {
+            "habit": [],
+            "comparison": [],
+            "baseline_focus": None,
+            "baseline_stress": None,
+            "learning_type": None,
+            "text": "暂时还没有足够稳定的历史记录来形成这个人的习惯画像。"
+        }
+
+    # ====== 3. 计算基线 ======
+    baseline_stress = mean(baseline_stress_list)
+    baseline_focus = mean(baseline_focus_list)
+    session_mean = mean(daily_session_counts) if daily_session_counts else 0.0
+    active_hour_mean = mean(active_hours) if active_hours else None
+
+    habit_bits = []
+
+    # ====== 4. 学习时间类型 ======
+    learning_type = None
+    if active_hour_mean is not None:
+        if active_hour_mean < 11:
+            learning_type = "morning"
+            habit_bits.append("你通常更容易在上午把状态提起来")
+        elif active_hour_mean < 16:
+            learning_type = "afternoon"
+            habit_bits.append("你更常在下午慢慢进入状态")
+        else:
+            learning_type = "night"
+            habit_bits.append("你多半要到晚上才更容易沉下来")
+
+    # ====== 5. 专注能力 ======
+    if baseline_focus >= 70:
+        habit_bits.append("你的专注底子整体还不错")
+    elif baseline_focus <= 45:
+        habit_bits.append("你平时就比较容易被分神")
+    else:
+        habit_bits.append("你的专注起伏不算太夸张")
+
+    # ====== 6. 压力状态 ======
+    if baseline_stress >= 70:
+        habit_bits.append("但学习一忙起来，压力也会跟着上去")
+    elif baseline_stress <= 50:
+        habit_bits.append("平时压力通常不算重")
+    else:
+        habit_bits.append("平时压力大多还在可控范围")
+
+    # ====== 7. 学习结构 ======
+    if session_mean >= 4:
+        habit_bits.append("你通常能把学习拆成几段完成")
+    elif session_mean <= 2:
+        habit_bits.append("你更像是少量几段就能推进的人")
+
+    # ====== 8. 和今天对比 ======
+    comparison_bits = []
+
+    if current_stress_average is not None:
+        if current_stress_average > baseline_stress + 8:
+            comparison_bits.append("今天比你平时更紧一点")
+        elif current_stress_average < baseline_stress - 8:
+            comparison_bits.append("今天比你平时松一些")
+        else:
+            comparison_bits.append("今天压力和你平时差不多")
+
+    if current_focus_average is not None:
+        if current_focus_average > baseline_focus + 8:
+            comparison_bits.append("专注比你平时更在线")
+        elif current_focus_average < baseline_focus - 8:
+            comparison_bits.append("专注比你平时弱一点")
+        else:
+            comparison_bits.append("专注大体上和你平时差不多")
+
+    # ====== 9. 生成文本（给AI或展示用） ======
+    profile_sentence = "；".join(habit_bits)
+    comparison_sentence = "；".join(comparison_bits)
+
+    profile_text = profile_sentence
+    if comparison_sentence:
+        profile_text += "。" + comparison_sentence
+
+    # ====== 10. 返回结构化结果 ======
+    return {
+        "habit": habit_bits,
+        "comparison": comparison_bits,
+        "baseline_focus": baseline_focus,
+        "baseline_stress": baseline_stress,
+        "learning_type": learning_type,
+        "text": profile_text
+    }
+
+
+def _build_task_summary(
+    user_id: str,
+    task_date: str,
+    selected_dates: Optional[list[str]] = None,
+    user_data: Optional[dict] = None,
+) -> str:
+    """提炼用户今天或本周的任务描述。"""
+    if selected_dates and user_data:
+        task_lines: list[str] = []
+        for date_key in selected_dates:
+            row = get_user_daily_task(user_id, date_key)
+            if row and row[2]:
+                task_lines.append(f"{format_short_cn_date(date_key)}：{str(row[2]).strip()}")
+        if task_lines:
+            return "；".join(task_lines)
+
+    row = get_user_daily_task(user_id, task_date)
+    if row and row[2]:
+        return str(row[2]).strip()
+    return "今天还没有写具体任务。"
+
+
+def build_ai_daily_pressure_analysis(
+    *,
+    period_label: str,
+    display_label: str,
+    user_id: str,
+    analysis_result: dict,
+    recommendation: dict,
+    profile_summary: str = "",
+    user_preference: str = "",
+    task_summary: str = "",
+    focus_periods: list[FocusPeriod] | None = None,
+) -> str:
+    """
+    使用豆包生成压力分析。若未配置密钥或请求失败，则回退到本地摘要。
+    """
+    state = str(recommendation.get("state") or "正常状态")
+    if focus_periods:
+        normal_count = sum(1 for period in focus_periods if period.state == "正常")
+        overload_count = sum(1 for period in focus_periods if period.state != "正常")
+        if overload_count > 0 and normal_count > 0:
+            summary_text = "今天有几段状态不错，也有几段明显更吃力，节奏不是完全一样的。"
+        elif overload_count > 0:
+            summary_text = "今天有几段明显更吃力，说明中间还是有些地方需要你多留意。"
+        else:
+            summary_text = "今天大部分时间状态都还算平稳。"
+    else:
+        summary_text = "当天整体状态可以先按当前判断来理解。"
+
+    cache_key = _make_ai_analysis_cache_key(
+        period_label=period_label,
+        display_label=display_label,
+        user_id=user_id,
+        analysis_result=analysis_result,
+        recommendation=recommendation,
+        profile_summary=profile_summary,
+        user_preference=user_preference,
+        task_summary=task_summary,
+        summary_text=summary_text,
+        focus_periods=focus_periods,
+    )
+    cached_text = _AI_ANALYSIS_CACHE.get(cache_key)
+    if cached_text:
+        return cached_text
+
+    api_key = os.getenv("ARK_API_KEY", os.getenv("DOUBAO_API_KEY", "")).strip()
+    print("🔥 DEBUG: API KEY =", api_key)
+
+    if not api_key:
+        result = _build_local_ai_pressure_analysis(
+            period_label=period_label,
+            display_label=display_label,
+            user_id=user_id,
+            analysis_result=analysis_result,
+            recommendation=recommendation,
+            summary_text="\n\n".join(
+                part
+                for part in [
+                    profile_summary.strip(),
+                    user_preference.strip(),
+                    task_summary.strip(),
+                    summary_text.strip(),
+                ]
+                if part
+            ),
+        )
+        _AI_ANALYSIS_CACHE[cache_key] = result
+        return result
+    base_url = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
+    model_name = os.getenv("DOUBAO_MODEL", "Doubao-pro-32k").strip()
+
+    stress_average = _format_float_value(analysis_result.get("stress_average"))
+    focus_average = _format_float_value(analysis_result.get("focus_average"))
+    study_count = int(analysis_result.get("study_count") or 0)
+    stress_trend = str(analysis_result.get("stress_trend") or "no data")
+    focus_trend = str(analysis_result.get("focus_trend") or "no data")
+    advice = str(recommendation.get("advice") or "")
+
+    if period_label == "day":
+        prompt = _build_daily_prompt(
+            user_id=user_id,
+            display_label=display_label,
+            task_summary=task_summary,
+            stress_average=stress_average,
+            focus_average=focus_average,
+            stress_trend=stress_trend,
+            focus_trend=focus_trend,
+            study_count=study_count,
+            advice=advice,
+            summary_text=summary_text,
+        )
+    else:
+        prompt = _build_weekly_prompt(
+            display_label=display_label,
+            stress_average=stress_average,
+            focus_average=focus_average,
+            stress_trend=stress_trend,
+            focus_trend=focus_trend,
+            study_count=study_count,
+            profile_text=profile_summary,
+        )
+
+    payload = {
+        "model": "doubao-1-5-pro-32k-250115",
+        "messages": [
+            {"role": "system", "content": "你是一个严谨认真的学习复盘助手"},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.3,
+        "max_tokens": 150
+    }
+    print("🔥 DEBUG payload =", payload)
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+
+    try:
+        print("🔥 DEBUG: 正在调用豆包API")
+        response = requests.post(
+            base_url,
+            json=payload,
+            headers=headers,
+            timeout=(3, 20)
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        print("🔥 RAW RESPONSE =", data)
+        content = _extract_doubao_response_text(data)
+        print("🔥 AI content =", content)
+        if content:
+            _AI_ANALYSIS_CACHE[cache_key] = content
+            return content
+    except Exception as exc:
+        logger.warning(
+            "Doubao %s analysis failed for %s %s: %s",
+            period_label,
+            user_id,
+            display_label,
+            exc,
+        )
+
+    result = _build_local_ai_pressure_analysis(
+        period_label=period_label,
+        display_label=display_label,
+        user_id=user_id,
+        analysis_result=analysis_result,
+        recommendation=recommendation,
+        summary_text="\n\n".join(
+            part
+            for part in [
+                profile_summary.strip(),
+                user_preference.strip(),
+                task_summary.strip(),
+                summary_text.strip(),
+            ]
+            if part
+        ),
+    )
+    _AI_ANALYSIS_CACHE[cache_key] = result
+    return result
 
 
 def build_hrv_trend_points(history_dict: dict, date_key: Optional[str] = None) -> List[TrendPoint]:
@@ -317,7 +985,7 @@ def build_pomodoro_periods(
 
 
 def build_weekday_trend_points(week_start: str, week_end: str, user_data: dict) -> List[TrendPoint]:
-    """按周一到周日输出 7 个日级 HRV 点。"""
+    """按周一到周日输出 7 个日级专注评分点。"""
     start_dt = datetime.strptime(week_start, "%Y-%m-%d")
     end_dt = datetime.strptime(week_end, "%Y-%m-%d")
     weekday_names = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
@@ -330,8 +998,8 @@ def build_weekday_trend_points(week_start: str, week_end: str, user_data: dict) 
         history_dict = user_data.get(date_key)
 
         if history_dict and history_dict.get("time") and history_dict.get("hr"):
-            day_hrv_points = build_hrv_trend_points(history_dict, date_key)
-            day_values = [point.value for point in day_hrv_points if point.value is not None]
+            _day_focus_periods, day_scores, _day_curve = build_pomodoro_periods(history_dict)
+            day_values = [float(item.get("focus") or 0.0) for item in day_scores if item.get("focus") is not None]
             day_value = round(mean(day_values), 2) if day_values else None
         else:
             day_value = None
@@ -363,11 +1031,13 @@ def build_daily_dashboard(
     user_id: Optional[str] = None,
     date: Optional[str] = None,
     period: str = "day",
+    generate_report: bool = True
 ) -> DailyDashboard:
-    """
-    根据原始 HRV 数据生成前端统计页所需的数据。
-    """
-    daily_data = load_and_process_hrv_data(str(RAW_DATA_PATH))
+
+    print("🔥 DEBUG: period =", period)
+    print("🔥 DEBUG: generate_report =", generate_report)
+
+    daily_data = get_cached_hrv_data()
     if not daily_data:
         raise HTTPException(status_code=404, detail="No HRV data available")
 
@@ -378,7 +1048,11 @@ def build_daily_dashboard(
     user_data = daily_data[selected_user_id]
     if date is None or date not in user_data:
         raise HTTPException(status_code=404, detail=f"Date not found for user {selected_user_id}: {date}")
+
     target_date = date
+
+    # ====== 周数据（但不 return）======
+    weekly_dashboard = None
     if period == "week":
         week_start, week_end = week_bounds(target_date)
         selected_dates = [
@@ -388,7 +1062,8 @@ def build_daily_dashboard(
         ]
         if not selected_dates:
             selected_dates = [target_date]
-        return build_weekly_dashboard(
+
+        weekly_dashboard = build_weekly_dashboard(
             selected_user_id,
             target_date,
             week_start,
@@ -397,15 +1072,67 @@ def build_daily_dashboard(
             user_data,
         )
 
+    # ====== 日数据 ======
     history_dict = user_data[target_date]
+
+    preference_row = get_user_ai_preference(selected_user_id)
+    user_preference = str(preference_row[1] or "").strip() if preference_row else ""
+
+    task_row = get_user_daily_task(selected_user_id, target_date)
+    user_daily_task = str(task_row[2] or "").strip() if task_row else ""
+
     focus_periods, score_list_per_pomodoro, pomodoro_trend_points = build_pomodoro_periods(history_dict)
     interval_minutes = sample_interval_minutes(history_dict["time"])
     trend_points = pomodoro_trend_points or build_hourly_trend_points(history_dict)
 
     analysis = LearningAnalysis()
     analysis_result = analysis.analyze_daily_learning(score_list_per_pomodoro)
+
     recommendation = RecommendationEngine().generate(analysis_result)
     report = ReportGenerator().generate(analysis_result, recommendation)
+
+    # ====== AI ======
+    ai_stress_analysis = None
+    print("🔥 DEBUG: 即将判断是否进入AI")
+
+    if generate_report:
+
+        if period == "day":
+            print("🔥 进入日分析")
+
+            ai_stress_analysis = build_ai_daily_pressure_analysis(
+                period_label="今日",
+                display_label=format_cn_date(target_date),
+                user_id=selected_user_id,
+                analysis_result=analysis_result,
+                recommendation=recommendation,
+                user_preference=user_preference,
+                task_summary=user_daily_task,
+                focus_periods=focus_periods,
+            )
+
+        elif period == "week":
+            print("🔥 进入周分析")
+
+            ai_stress_analysis = build_ai_daily_pressure_analysis(
+                period_label="本周",
+                display_label=weekly_dashboard.range_label if weekly_dashboard else "",
+                user_id=selected_user_id,
+                analysis_result=analysis_result,
+                recommendation=recommendation,
+                user_preference=user_preference,
+                task_summary=user_daily_task,
+                focus_periods=focus_periods,
+            )
+
+    print("🔥 AI结果 =", ai_stress_analysis)
+
+    # ====== 如果是周 → 返回周结构 ======
+    if period == "week" and weekly_dashboard:
+        weekly_dashboard.ai_stress_analysis = ai_stress_analysis
+        return weekly_dashboard
+
+    # ====== 否则返回日 ======
     recent_sessions = [
         RecentSession(
             session_id=row[0],
@@ -423,7 +1150,9 @@ def build_daily_dashboard(
         history_dict["time"][-1],
         sample_interval_minutes=interval_minutes,
     )
+
     avg_heart_rate = round(mean(history_dict["hr"]), 2) if history_dict["hr"] else 0.0
+
     focus_minutes = min(
         sum(period.duration_minutes for period in focus_periods if period.focus >= 70),
         total_minutes,
@@ -448,6 +1177,9 @@ def build_daily_dashboard(
         focus_minutes=focus_minutes,
         avg_heart_rate=avg_heart_rate,
         recommendation=recommendation,
+        ai_stress_analysis=ai_stress_analysis,
+        user_ai_preference=user_preference,
+        user_daily_task=user_daily_task,
         trend_points=trend_points,
         focus_periods=focus_periods,
         recent_sessions=recent_sessions,
@@ -464,6 +1196,8 @@ def build_weekly_dashboard(
 ) -> DailyDashboard:
     """按周聚合：日期范围 + 一周 HRV 曲线。"""
     model = FocusModel()
+    preference_row = get_user_ai_preference(user_id)
+    user_preference = str(preference_row[1] or "").strip() if preference_row else ""
     all_score_list_per_pomodoro = []
     weekly_trend_points: list[TrendPoint] = []
     weekly_focus_periods: list[FocusPeriod] = []
@@ -508,6 +1242,18 @@ def build_weekly_dashboard(
     analysis_result = analysis.analyze_daily_learning(all_score_list_per_pomodoro)
     recommendation = RecommendationEngine().generate(analysis_result)
     report = ReportGenerator().generate(analysis_result, recommendation)
+    current_task_row = get_user_daily_task(user_id, target_date)
+    user_daily_task = str(current_task_row[2] or "").strip() if current_task_row else ""
+    ai_stress_analysis = build_ai_daily_pressure_analysis(
+        period_label="本周",
+        display_label=f"{format_short_cn_date(week_start)} - {format_short_cn_date(week_end)}",
+        user_id=user_id,
+        analysis_result=analysis_result,
+        recommendation=recommendation,
+        user_preference=user_preference,
+        task_summary=_build_daily_task_summary(user_id, target_date, selected_dates=selected_dates, user_data=user_data),
+        focus_periods=weekly_focus_periods,
+    )
     recent_sessions = [
         RecentSession(
             session_id=row[0],
@@ -546,6 +1292,9 @@ def build_weekly_dashboard(
         focus_minutes=focus_minutes,
         avg_heart_rate=avg_heart_rate,
         recommendation=recommendation,
+        ai_stress_analysis=ai_stress_analysis,
+        user_ai_preference=user_preference,
+        user_daily_task=user_daily_task,
         trend_points=weekly_trend_points,
         focus_periods=weekly_focus_periods,
         recent_sessions=recent_sessions,
@@ -702,11 +1451,12 @@ def daily_dashboard(
     user_id: Optional[str] = Query(default=None, description="用户 ID"),
     date: Optional[str] = Query(default=None, description="YYYY-MM-DD"),
     period: str = Query(default="day", description="day 或 week"),
+    generate_report: bool = Query(default=False, description="是否生成每日 AI 报告"),
 ):
     """
     返回前端统计页所需的日统计数据。
     """
-    return build_daily_dashboard(user_id, date, period)
+    return build_daily_dashboard(user_id, date, period, generate_report)
 
 
 def calculate_duration(start_time: str, end_time: Optional[str]) -> Optional[float]:
