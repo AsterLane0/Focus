@@ -471,15 +471,27 @@
         .calendar-panel-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             gap: 8px;
             margin-bottom: 6px;
         }
 
         .calendar-title {
-            font-size: 8px;
             color: #5f4a86;
             font-weight: 600;
+            line-height: 1.05;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            min-width: 44px;
+        }
+
+        .calendar-title-year {
+            font-size: 8px;
+        }
+
+        .calendar-title-month {
+            font-size: 8px;
         }
 
         .calendar-legend {
@@ -498,11 +510,12 @@
         }
 
         .calendar-legend-dot {
-            width: 6px;
-            height: 6px;
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
             display: inline-block;
             background: rgba(118, 75, 162, 0.2);
+            box-shadow: inset 0 0 0 1px rgba(118, 75, 162, 0.06);
         }
 
         .calendar-legend-dot.has-data {
@@ -654,6 +667,7 @@
             border-radius: 8px;
             padding: 10px;
             margin-bottom: 10px;
+            overflow: visible;
         }
 
         .section-label {
@@ -662,11 +676,25 @@
             margin-bottom: 4px;
         }
 
+        .section-sub-label {
+            font-size: 7px;
+            color: #8b7ea8;
+            margin-top: -2px;
+            margin-bottom: 6px;
+            line-height: 1.2;
+        }
+
         .section-placeholder {
             font-size: 10px;
             color: #aaa;
             text-align: center;
             padding: 10px;
+        }
+
+        .section-placeholder.chart-host {
+            padding: 0;
+            text-align: left;
+            overflow: visible;
         }
 
         .ai-analysis-text {
@@ -714,6 +742,7 @@
             display: flex;
             flex-direction: column;
             gap: 6px;
+            margin-left: 0;
         }
 
         .trend-scroll-day {
@@ -787,7 +816,7 @@
         .day-axis {
             position: relative;
             height: 12px;
-            margin-top: 2px;
+            margin-top: 8px;
             font-size: 7px;
             color: #8b7ea8;
         }
@@ -804,11 +833,102 @@
             font-weight: 600;
         }
 
-        .chart-axis-note {
-            font-size: 7px;
+        .trend-chart-box {
+            position: relative;
+            margin: 0 auto;
+            overflow: visible;
+        }
+
+        .chart-tooltip {
+            position: absolute;
+            min-width: 56px;
+            max-width: 66px;
+            padding: 4px 6px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(118, 75, 162, 0.08);
+            box-shadow: 0 10px 24px rgba(96, 74, 134, 0.08);
+            color: #5f4a86;
+            font-size: 6px;
+            line-height: 1.24;
+            pointer-events: none;
+            z-index: 3;
+            backdrop-filter: blur(6px);
+            animation: tooltipFadeIn 140ms ease-out;
+        }
+
+        .chart-tooltip::after {
+            content: none;
+        }
+
+        .chart-tooltip-time {
+            font-weight: 600;
+            margin-bottom: 1px;
+            color: #6d49b4;
+            text-align: center;
+        }
+
+        .chart-tooltip-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 3px;
+            white-space: nowrap;
+        }
+
+        @keyframes tooltipFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(4px) scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .chart-tooltip-key {
             color: #8b7ea8;
-            margin-bottom: 2px;
-            line-height: 1.2;
+        }
+
+        .chart-y-axis {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .chart-y-axis-tick {
+            position: absolute;
+            right: 8px;
+            transform: translateY(-50%);
+            font-size: 6px;
+            color: #9d92b5;
+            white-space: nowrap;
+        }
+
+        .chart-y-axis-line {
+            position: absolute;
+            right: 2px;
+            width: 1px;
+            background: rgba(118, 75, 162, 0.12);
+        }
+
+        .chart-x-axis-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(118, 75, 162, 0.12);
+        }
+
+        .chart-grid-line {
+            stroke: rgba(118, 75, 162, 0.16);
+            stroke-width: 1;
+            stroke-dasharray: 3 4;
+        }
+
+        .selected-point-halo {
+            filter: blur(2px);
         }
 
         .chart-value-label {
@@ -831,29 +951,44 @@
         }
 
         .period-list {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 6px;
         }
 
         .period-chip {
+            position: relative;
             border: none;
-            border-radius: 10px;
-            padding: 7px 8px;
+            border-radius: 9px;
+            padding: 5px 6px;
             background: rgba(255, 255, 255, 0.72);
             color: #5f4a86;
             text-align: left;
             cursor: pointer;
             min-width: 0;
-            flex: 0 0 auto;
-            max-width: 100%;
+            width: 100%;
+            box-sizing: border-box;
             box-shadow: inset 0 0 0 1px rgba(118, 75, 162, 0.08);
+            overflow: hidden;
+            transform: translateY(8px) scale(0.98);
+            opacity: 0;
+            animation: periodChipEnter 440ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            animation-delay: var(--enter-delay, 0ms);
+            transition:
+                transform 220ms ease,
+                box-shadow 220ms ease,
+                background 220ms ease,
+                color 220ms ease,
+                filter 220ms ease;
         }
 
         .period-chip.active {
             background: var(--primary-gradient);
             color: #fff;
-            box-shadow: none;
+            box-shadow: 0 10px 22px rgba(118, 75, 162, 0.30);
+            animation:
+                periodChipEnter 440ms cubic-bezier(0.22, 1, 0.36, 1) forwards,
+                periodChipPulse 2.4s ease-in-out infinite;
         }
 
         .period-chip.normal {
@@ -875,18 +1010,115 @@
             color: #fff;
         }
 
+        .period-chip::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.26) 42%, transparent 72%);
+            transform: translateX(-130%);
+            opacity: 0;
+            transition: transform 480ms ease, opacity 240ms ease;
+            pointer-events: none;
+        }
+
+        .period-chip::after {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            box-shadow: 0 0 0 0 rgba(139, 99, 220, 0.0);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .period-chip:hover {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow:
+                inset 0 0 0 1px rgba(118, 75, 162, 0.08),
+                0 10px 20px rgba(109, 73, 180, 0.12);
+            filter: saturate(1.04);
+        }
+
+        .period-chip:hover::before {
+            transform: translateX(130%);
+            opacity: 1;
+        }
+
+        .period-chip:active {
+            transform: translateY(0) scale(0.99);
+        }
+
+        .period-chip:focus-visible {
+            outline: none;
+            box-shadow:
+                inset 0 0 0 1px rgba(118, 75, 162, 0.10),
+                0 0 0 2px rgba(139, 99, 220, 0.18),
+                0 10px 18px rgba(109, 73, 180, 0.14);
+        }
+
+        .period-chip.active::after {
+            opacity: 1;
+            animation: periodChipGlow 2.4s ease-in-out infinite;
+        }
+
         .period-chip-time {
-            font-size: 9px;
+            font-size: 8px;
             font-weight: 600;
-            line-height: 1.2;
-            margin-bottom: 2px;
+            line-height: 1.15;
+            margin-bottom: 1px;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .period-chip-state {
-            font-size: 7px;
-            opacity: 0.9;
+            font-size: 6px;
+            opacity: 0.88;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @keyframes periodChipEnter {
+            from {
+                opacity: 0;
+                transform: translateY(8px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes periodChipPulse {
+            0%, 100% {
+                box-shadow: 0 10px 22px rgba(118, 75, 162, 0.24);
+            }
+            50% {
+                box-shadow: 0 14px 28px rgba(118, 75, 162, 0.34);
+            }
+        }
+
+        @keyframes periodChipGlow {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(139, 99, 220, 0.0);
+            }
+            50% {
+                box-shadow: 0 0 0 6px rgba(139, 99, 220, 0.12);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .period-chip,
+            .period-chip.active,
+            .period-chip.active::after {
+                animation: none !important;
+            }
+
+            .period-chip,
+            .period-chip::before {
+                transition: none !important;
+            }
         }
 
         .period-time {
@@ -1027,6 +1259,50 @@
             font-size: 10px;
             color: #aaa;
         }
+        /* ===== 日历报告高亮 ===== */
+        .calendar-cell.has-report {
+            position: relative;
+            border-radius: 10px;
+            border: 1px solid rgba(139, 99, 220, 0.5);
+            box-shadow: 0 0 10px rgba(139, 99, 220, 0.25);
+            transition: all 0.2s ease;
+        }
+
+        /* 小紫点 */
+        .calendar-cell .report-badge {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            width: 6px;
+            height: 6px;
+            background: #8b63dc;
+            border-radius: 50%;
+            box-shadow: 0 0 6px rgba(139, 99, 220, 0.9);
+        }
+
+        /* hover（质感） */
+        .calendar-cell.has-report:hover {
+            transform: translateY(-1px) scale(1.05);
+            box-shadow: 0 4px 12px rgba(139, 99, 220, 0.4);
+        }
+
+        /* 选中 + 有报告 */
+        .calendar-cell.has-report.selected {
+            background: linear-gradient(135deg, #c6a8ff, #8b63dc);
+            color: white;
+            border: none;
+        }
+
+        /* 普通数据弱化 */
+        .calendar-cell.has-data:not(.has-report) {
+            opacity: 0.7;
+        }
+
+        /* 图例 */
+        .calendar-legend-dot.has-report {
+            background: #8b63dc;
+            box-shadow: 0 0 6px rgba(139, 99, 220, 0.8);
+        }
     </style>
 </head>
 <body>
@@ -1136,6 +1412,7 @@
                                 <div class="calendar-title" id="calendarTitle">月历</div>
                                 <div class="calendar-legend">
                                     <span class="calendar-legend-item"><span class="calendar-legend-dot has-data"></span>有数据</span>
+                                    <span class="calendar-legend-item"><span class="calendar-legend-dot has-report"></span>有报告</span>
                                     <span class="calendar-legend-item"><span class="calendar-legend-dot"></span>无数据</span>
                                 </div>
                             </div>
@@ -1197,6 +1474,7 @@
 
                         <div class="stats-section">
                             <div class="section-label" id="hrvChartLabel">番茄钟HRV曲线</div>
+                            <div class="section-sub-label" id="chartAxisLabel">纵轴：专注评分</div>
                             <div class="section-placeholder" id="hrvChart">（折线图待接入）</div>
                         </div>
                         
@@ -1368,6 +1646,8 @@
         let currentRangeLabel = null;
         let currentFocusPeriods = [];
         let currentSelectedPomodoroIndex = 0;
+        let currentPomodoroCurvePoints = [];
+        let currentSelectedCurvePointIndex = 0;
         let currentTodayPomodoroCount = null;
         let currentDailyTask = '';
         let currentDailyReportReady = false;
@@ -1426,7 +1706,10 @@
         function updateCalendarTitle() {
             const title = document.getElementById('calendarTitle');
             if (!title) return;
-            title.textContent = `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月`;
+            title.innerHTML = `
+                <span class="calendar-title-year">${currentDate.getFullYear()}年</span>
+                <span class="calendar-title-month">${currentDate.getMonth() + 1}月</span>
+            `;
         }
 
         function renderMonthCalendar() {
@@ -1453,11 +1736,22 @@
                 const isSelected = dateKey === selectedKey;
                 const classes = ['calendar-cell'];
                 if (hasData) classes.push('has-data');
+
+                // ⭐ 判断是否有报告
+                const hasReport = localStorage.getItem(
+                    `focus_daily_report_ready_${currentUserId || 'guest'}_${dateKey}`
+                ) === '1';
+
+                if (hasReport) classes.push('has-report');
+
                 if (isSelected) classes.push('selected');
                 if (!hasData) classes.push('disabled');
                 const label = day;
                 cells.push(`
-                    <div class="${classes.join(' ')}" data-date="${dateKey}" ${hasData ? `onclick="selectCalendarDate('${dateKey}')"` : ''}>
+                    <div class="${classes.join(' ')}"
+                         data-date="${dateKey}"
+                         title="${hasReport ? '已生成报告' : ''}"
+                         ${hasData ? `onclick="selectCalendarDate('${dateKey}')"` : ''}>
                         ${label}
                         ${hasData ? '<span class="dot"></span>' : ''}
                     </div>
@@ -1514,98 +1808,182 @@
             const label = document.getElementById('hrvChartLabel');
             if (!label) return;
             if (!period) {
-                label.textContent = currentTab === 'week' ? 'HRV趋势' : '番茄钟HRV曲线';
+                label.textContent = currentTab === 'week' ? '专注度趋势' : '番茄钟专注度曲线';
                 return;
             }
             label.textContent = `${period.start_time} - ${period.end_time} · ${period.state || '正常'}`;
         }
 
-         function renderAiAnalysis(summary) {
+        function renderAiAnalysis(summary) {
             const text = document.getElementById('aiAnalysisText');
+            if (!text) return;
 
-            console.log("🔥 当前tab =", currentTab);
-            console.log("🔥 AI =", summary?.ai_stress_analysis);
-
-            if (!summary) {
-                text.textContent = "暂无分析结果";
+            if (currentTab === 'day' && currentDailyReportGenerating) {
+                text.textContent = '正在根据今日任务生成每日报告...';
                 return;
             }
 
-            if (currentTab === "day") {
-                text.textContent = summary.ai_stress_analysis || "暂无今日分析";
-            } else if (currentTab === "week") {
-                text.textContent = summary.ai_stress_analysis || "暂无本周分析";
+            if (currentTab === 'day' && !currentDailyReportReady) {
+                text.textContent = '先写今日任务，再点“生成每日报告”。';
+                return;
+            }
+
+            if (!summary) {
+                text.textContent = currentTab === 'week' ? '暂无本周分析' : '暂无今日分析';
+                return;
+            }
+
+            text.textContent = summary.ai_stress_analysis || (currentTab === 'week' ? '暂无本周分析' : '暂无今日分析');
+        }
+
+        function selectPomodoroCurvePoint(index, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            if (!currentPomodoroCurvePoints || currentPomodoroCurvePoints.length === 0) return;
+            currentSelectedCurvePointIndex = Math.max(0, Math.min(index, currentPomodoroCurvePoints.length - 1));
+            renderPomodoroCurve(currentPomodoroCurvePoints);
+        }
+
+        function clearPomodoroCurveSelection(event) {
+            if (event && event.target && event.target.closest && event.target.closest('[data-point-hit="1"]')) return;
+            if (!currentPomodoroCurvePoints || currentPomodoroCurvePoints.length === 0) return;
+            currentSelectedCurvePointIndex = -1;
+            renderPomodoroCurve(currentPomodoroCurvePoints);
+        }
+
+        function selectWeekTrendPoint(index, event) {
+            if (event) event.stopPropagation();
+            currentSelectedWeekPointIndex = index;
+            if (currentDashboard?.trend_points) {
+                renderTrendChart(currentDashboard.trend_points);
             }
         }
+
+        function clearWeekTrendSelection(event) {
+            if (event && event.target && event.target.closest && event.target.closest('[data-point-hit="1"]')) return;
+            currentSelectedWeekPointIndex = -1;
+            if (currentDashboard?.trend_points) {
+                renderTrendChart(currentDashboard.trend_points);
+            }
+        }
+
         function renderPomodoroCurve(points) {
             const container = document.getElementById('hrvChart');
             if (!points || points.length === 0) {
-                container.innerHTML = '（暂无该番茄钟HRV曲线）';
+                currentPomodoroCurvePoints = [];
+                container.classList.remove('chart-host');
+                container.innerHTML = '（暂无该番茄钟专注度曲线）';
                 return;
             }
 
-            const values = points.map(point => point.focus ?? point.value ?? 0);
+            currentPomodoroCurvePoints = points.slice();
+            const values = points.map(point => point.focus ?? point.value ?? null);
             const validValues = values.filter(value => value !== null && value !== undefined);
             if (validValues.length === 0) {
-                container.innerHTML = '（暂无该番茄钟HRV曲线）';
+                currentPomodoroCurvePoints = [];
+                container.classList.remove('chart-host');
+                container.innerHTML = '（暂无该番茄钟专注度曲线）';
                 return;
             }
 
+            container.classList.add('chart-host');
+
             const accent = '#8b63dc';
-            const width = 150;
-            const height = 72;
-            const paddingLeft = 12;
-            const paddingRight = 12;
-            const paddingTop = 12;
-            const paddingBottom = 14;
-            const min = Math.min(...validValues);
-            const max = Math.max(...validValues);
-            const range = max - min || 1;
-            const plotWidth = width - paddingLeft - paddingRight;
+            const width = 164;
+            const height = 92;
+            const paddingRight = 8;
+            const paddingTop = 16;
+            const paddingBottom = 16;
+            const xAxisY = height - paddingBottom + 4;
+            const axisX = 14;
+            const scaleMin = 0;
+            const scaleMax = 100;
+            const range = scaleMax - scaleMin || 1;
+            const plotWidth = width - axisX - paddingRight;
             const step = points.length > 1 ? plotWidth / (points.length - 1) : 0;
             const coords = points.map((point, index) => {
-                const value = Number(point.focus ?? point.value ?? 0);
-                const x = paddingLeft + index * step;
-                const y = height - paddingBottom - ((value - min) / range) * (height - paddingTop - paddingBottom);
-                return { x, y, value, time: point.time || point.label || '' };
-            });
+                const rawValue = point.focus ?? point.value ?? null;
+                if (rawValue === null || rawValue === undefined) return null;
+                const value = Math.max(scaleMin, Math.min(scaleMax, Number(rawValue)));
+                const x = axisX + index * step;
+                const y = xAxisY - ((value - scaleMin) / range) * (xAxisY - paddingTop);
+                return {
+                    x,
+                    y,
+                    value,
+                    focus: Number(point.focus ?? point.value ?? value),
+                    stress: Number(point.stress ?? 0),
+                    time: point.time || point.label || '',
+                };
+            }).filter(Boolean);
             const linePoints = coords.map(point => `${point.x},${point.y}`).join(' ');
 
-            const dotMarkup = coords.map((point) => `
-                <g>
-                    <circle cx="${point.x}" cy="${point.y}" r="4" fill="${accent}"></circle>
-                    <circle cx="${point.x}" cy="${point.y}" r="7" fill="transparent">
-                        <title>${point.time}: ${Number(point.value).toFixed(1)}</title>
-                    </circle>
-                </g>
-            `).join('');
+            const hasSelection = currentSelectedCurvePointIndex >= 0 && currentSelectedCurvePointIndex < coords.length;
+            const safeSelectedIndex = hasSelection ? currentSelectedCurvePointIndex : -1;
+            const selectedPoint = hasSelection ? coords[safeSelectedIndex] : null;
 
-            const labelMarkup = coords.map((point, index) => {
-                const placeBelow = point.y < paddingTop + 16;
-                const labelTop = placeBelow ? point.y + 8 : point.y - 8;
-                const labelTransform = placeBelow ? 'translate(-50%, 0)' : 'translate(-50%, -100%)';
-                const labelLeft = Math.min(Math.max(point.x, 8), width - 8);
+            const dotMarkup = coords.map((point, index) => {
+                const isSelected = index === safeSelectedIndex;
                 return `
-                    <div
-                        class="chart-value-label"
-                        style="left:${labelLeft}px; top:${labelTop}px; transform:${labelTransform};"
-                    >${Number(point.value).toFixed(1)}</div>
+                    <g data-point-hit="1" style="cursor:pointer" onclick="selectPomodoroCurvePoint(${index}, event)">
+                        ${isSelected ? `<circle class="selected-point-halo" cx="${point.x}" cy="${point.y}" r="9" fill="${accent}" opacity="0.18"></circle>` : ''}
+                        <circle cx="${point.x}" cy="${point.y}" r="${isSelected ? 5.5 : 4.5}" fill="${accent}" opacity="${isSelected ? '1' : '0.92'}"></circle>
+                        <circle cx="${point.x}" cy="${point.y}" r="${isSelected ? 9 : 7}" fill="transparent">
+                            <title>${point.time}: 专注 ${point.focus.toFixed(1)} / 压力 ${point.stress.toFixed(1)}</title>
+                        </circle>
+                    </g>
                 `;
             }).join('');
+
+            const gridMarkup = coords.map((point) => `
+                <line
+                    class="chart-grid-line"
+                    x1="${point.x}"
+                    y1="${paddingTop}"
+                    x2="${point.x}"
+                    y2="${xAxisY}"
+                ></line>
+            `).join('');
 
             const axisLabels = coords.map((point) => `
                 <span class="day-axis-label" style="left:${point.x}px">${point.time}</span>
             `).join('');
 
+            let tooltipMarkup = '';
+            if (selectedPoint) {
+                const tooltipWidth = 62;
+                const tooltipHeight = 28;
+                const tooltipLeft = Math.max(4, Math.min(selectedPoint.x - tooltipWidth / 2, width - tooltipWidth - 4));
+                const preferredBelowTop = selectedPoint.y + 10;
+                const maxBelowTop = height - tooltipHeight - paddingBottom - 2;
+                const preferredAboveTop = selectedPoint.y - tooltipHeight - 10;
+                const tooltipTop = preferredBelowTop <= maxBelowTop
+                    ? preferredBelowTop
+                    : Math.max(4, preferredAboveTop);
+                tooltipMarkup = `
+                    <div class="chart-tooltip" style="left:${tooltipLeft}px; top:${tooltipTop}px;">
+                        <div class="chart-tooltip-time">${selectedPoint.time}</div>
+                        <div class="chart-tooltip-row"><span class="chart-tooltip-key">专注</span><span>${selectedPoint.focus.toFixed(1)}</span></div>
+                        <div class="chart-tooltip-row"><span class="chart-tooltip-key">压力</span><span>${selectedPoint.stress.toFixed(1)}</span></div>
+                    </div>
+                `;
+            }
+
+            const xAxisRight = axisX + Math.max(0, points.length - 1) * step;
+
             container.innerHTML = `
-                <div class="trend-wrap" style="align-items:center; position:relative; width:${width}px; margin:0 auto;">
-                    <div class="chart-axis-note" style="width:${width}px; text-align:left;">纵轴：专注评分</div>
-                    <svg class="trend-svg" style="width:${width}px; height:${height}px; display:block; margin:0 auto;" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
-                        <polyline points="${linePoints}" fill="none" stroke="${accent}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></polyline>
-                        ${dotMarkup}
-                    </svg>
-                    ${labelMarkup}
-                    <div class="day-axis" style="width:${width}px; margin:0 auto;">${axisLabels}</div>
+                <div class="trend-wrap" onclick="clearPomodoroCurveSelection(event)">
+                    <div class="trend-chart-box" style="width:${width}px;" onclick="clearPomodoroCurveSelection(event)">
+                        <div class="chart-x-axis-line" style="left:${axisX - 3}px; width:${xAxisRight - axisX + 3}px; top:${xAxisY}px;"></div>
+                        <svg class="trend-svg" style="width:${width}px; height:${height}px; display:block; margin:0 auto;" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+                            ${gridMarkup}
+                            <polyline points="${linePoints}" fill="none" stroke="${accent}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                            ${dotMarkup}
+                        </svg>
+                        ${tooltipMarkup}
+                        <div class="day-axis" style="width:${width}px; margin:0 auto;">${axisLabels}</div>
+                    </div>
                 </div>
             `;
         }
@@ -1614,6 +1992,7 @@
             if (!currentFocusPeriods || currentFocusPeriods.length === 0) return;
             currentSelectedPomodoroIndex = Math.max(0, Math.min(index, currentFocusPeriods.length - 1));
             const period = currentFocusPeriods[currentSelectedPomodoroIndex];
+            currentSelectedCurvePointIndex = Math.max(0, (period.hrv_points || []).length - 1);
             document.querySelectorAll('.period-chip').forEach((el, idx) => {
                 el.classList.toggle('active', idx === currentSelectedPomodoroIndex);
             });
@@ -1624,6 +2003,7 @@
         function renderTrendChart(points) {
             const container = document.getElementById('hrvChart');
             if (!points || points.length === 0) {
+                container.classList.remove('chart-host');
                 container.innerHTML = '（暂无趋势数据）';
                 return;
             }
@@ -1633,27 +2013,33 @@
                 const values = points.map(point => point.value);
                 const validValues = values.filter(value => value !== null && value !== undefined);
                 if (validValues.length === 0) {
+                    container.classList.remove('chart-host');
                     container.innerHTML = '（暂无周趋势数据）';
                     return;
                 }
 
-                const width = 170;
+                container.classList.add('chart-host');
+
+                const accent = '#8b63dc';
+                const width = 164;
                 const height = 92;
-                const paddingLeft = 8;
-                const paddingRight = 24;
-                const paddingY = 12;
+                const paddingTop = 16;
+                const paddingBottom = 16;
+                const paddingRight = 8;
+                const axisX = 14;
+                const xAxisY = height - paddingBottom + 4;
                 const scaleMin = 0;
                 const scaleMax = 100;
-                const range = scaleMax - scaleMin;
-                const plotWidth = width - paddingLeft - paddingRight;
+                const range = scaleMax - scaleMin || 1;
+                const plotWidth = width - axisX - paddingRight;
                 const stepX = points.length > 1 ? plotWidth / (points.length - 1) : 0;
 
                 const coords = points.map((point, index) => {
                     if (point.value === null || point.value === undefined) return null;
-                    const x = paddingLeft + index * stepX;
-                    const clampedValue = Math.max(scaleMin, Math.min(scaleMax, point.value));
-                    const y = height - paddingY - ((clampedValue - scaleMin) / range) * (height - paddingY * 2);
-                    return { x, y };
+                    const x = axisX + index * stepX;
+                    const clampedValue = Math.max(scaleMin, Math.min(scaleMax, Number(point.value)));
+                    const y = xAxisY - ((clampedValue - scaleMin) / range) * (xAxisY - paddingTop);
+                    return { x, y, value: clampedValue, time: point.time || '', raw: point };
                 });
 
                 const segments = [];
@@ -1662,76 +2048,85 @@
                     if (point) {
                         currentSegment.push(`${point.x},${point.y}`);
                     } else if (currentSegment.length) {
-                        if (currentSegment.length > 1) {
-                            segments.push(currentSegment.slice());
-                        }
+                        if (currentSegment.length > 1) segments.push(currentSegment.slice());
                         currentSegment = [];
                     }
                 });
-                if (currentSegment.length > 1) {
-                    segments.push(currentSegment.slice());
-                }
+                if (currentSegment.length > 1) segments.push(currentSegment.slice());
 
                 const lineMarkup = segments.map(segment => `
-                    <polyline points="${segment.join(' ')}" fill="none" stroke="url(#chartGradient)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                    <polyline points="${segment.join(' ')}" fill="none" stroke="${accent}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></polyline>
                 `).join('');
 
+                const hasSelection = currentSelectedWeekPointIndex >= 0 && currentSelectedWeekPointIndex < coords.length && !!coords[currentSelectedWeekPointIndex];
+                const safeSelectedIndex = hasSelection ? currentSelectedWeekPointIndex : -1;
+                const selectedPoint = hasSelection ? coords[safeSelectedIndex] : null;
+
                 const dotMarkup = coords.map((point, index) => {
-                    const label = points[index].time || '';
+                    const x = axisX + index * stepX;
+                    const isSelected = index === safeSelectedIndex;
                     if (!point) {
-                        return `<circle cx="${paddingLeft + index * stepX}" cy="${height / 2}" r="2.5" fill="#d9ccea" opacity="0.4"></circle>`;
+                        return `
+                            <g>
+                                <circle cx="${x}" cy="${height / 2}" r="2.5" fill="#d9ccea" opacity="0.45"></circle>
+                            </g>
+                        `;
                     }
-                    const valueLabel = points[index].value?.toFixed(1) ?? '--';
-                    const placeBelow = point.y < paddingY + 16;
-                    const labelY = placeBelow ? point.y + 8 : point.y - 8;
                     return `
-                        <g>
-                            <circle cx="${point.x}" cy="${point.y}" r="4" fill="url(#chartGradient)"></circle>
-                            <circle cx="${point.x}" cy="${point.y}" r="6" fill="transparent">
-                                <title>${label}: ${points[index].value?.toFixed(2) ?? '--'}</title>
+                        <g data-point-hit="1" style="cursor:pointer" onclick="selectWeekTrendPoint(${index}, event)">
+                            ${isSelected ? `<circle class="selected-point-halo" cx="${point.x}" cy="${point.y}" r="9" fill="${accent}" opacity="0.18"></circle>` : ''}
+                            <circle cx="${point.x}" cy="${point.y}" r="${isSelected ? 5.5 : 4.5}" fill="${accent}" opacity="${isSelected ? '1' : '0.92'}"></circle>
+                            <circle cx="${point.x}" cy="${point.y}" r="6.5" fill="transparent">
+                                <title>${points[index].time || ''}: ${points[index].value?.toFixed(1) ?? '--'}</title>
                             </circle>
                         </g>
                     `;
                 }).join('');
 
-                const labelMarkup = coords.map((point, index) => {
-                    if (!point) return '';
-                    const valueLabel = points[index].value?.toFixed(1) ?? '--';
-                    const placeBelow = point.y < paddingY + 16;
-                    const labelTop = placeBelow ? point.y + 8 : point.y - 8;
-                    const labelTransform = placeBelow ? 'translate(-50%, 0)' : 'translate(-50%, -100%)';
+                const gridMarkup = points.map((point, index) => {
+                    const x = axisX + index * stepX;
                     return `
-                        <div
-                            class="chart-value-label"
-                            style="left:${point.x}px; top:${labelTop}px; transform:${labelTransform};"
-                        >${valueLabel}</div>
+                        <line class="chart-grid-line" x1="${x}" y1="${paddingTop}" x2="${x}" y2="${xAxisY}"></line>
                     `;
                 }).join('');
 
                 const axisLabels = points.map((point, index) => {
-                    const x = paddingLeft + index * stepX;
+                    const x = axisX + index * stepX;
                     return `<span class="week-axis-label" style="left:${x}px">${point.time}</span>`;
                 }).join('');
 
+                let tooltipMarkup = '';
+                if (selectedPoint) {
+                    const tooltipWidth = 62;
+                    const tooltipHeight = 28;
+                    const tooltipLeft = Math.max(4, Math.min(selectedPoint.x - tooltipWidth / 2, width - tooltipWidth - 4));
+                    const preferredBelowTop = selectedPoint.y + 10;
+                    const maxBelowTop = height - tooltipHeight - paddingBottom - 2;
+                    const preferredAboveTop = selectedPoint.y - tooltipHeight - 10;
+                    const tooltipTop = preferredBelowTop <= maxBelowTop
+                        ? preferredBelowTop
+                        : Math.max(4, preferredAboveTop);
+                    tooltipMarkup = `
+                        <div class="chart-tooltip" style="left:${tooltipLeft}px; top:${tooltipTop}px;">
+                            <div class="chart-tooltip-time">${selectedPoint.time}</div>
+                            <div class="chart-tooltip-row"><span class="chart-tooltip-key">专注</span><span>${selectedPoint.value.toFixed(1)}</span></div>
+                        </div>
+                    `;
+                }
+
+                const xAxisRight = axisX + Math.max(0, points.length - 1) * stepX;
+
                 container.innerHTML = `
-                    <div class="trend-wrap trend-wrap-week">
-                        <div class="chart-axis-note">纵轴：专注评分</div>
-                        <svg class="trend-svg trend-svg-week" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
-                            <defs>
-                                <linearGradient id="chartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stop-color="#c6a8ff"></stop>
-                                    <stop offset="45%" stop-color="#9a6df0"></stop>
-                                    <stop offset="100%" stop-color="#6d49b4"></stop>
-                                </linearGradient>
-                            </defs>
-                            ${lineMarkup}
-                            ${dotMarkup}
-                        </svg>
-                        ${labelMarkup}
-                        <div class="trend-axis">${axisLabels}</div>
-                        <div class="trend-meta">
-                            <span>最低 ${Math.min(...validValues).toFixed(2)}</span>
-                            <span>最高 ${Math.max(...validValues).toFixed(2)}</span>
+                    <div class="trend-wrap trend-wrap-week" onclick="clearWeekTrendSelection(event)">
+                        <div class="trend-chart-box" style="width:${width}px;" onclick="clearWeekTrendSelection(event)">
+                            <div class="chart-x-axis-line" style="left:${axisX - 3}px; width:${xAxisRight - axisX + 3}px; top:${xAxisY}px;"></div>
+                            <svg class="trend-svg trend-svg-week" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+                                ${gridMarkup}
+                                ${lineMarkup}
+                                ${dotMarkup}
+                            </svg>
+                            ${tooltipMarkup}
+                            <div class="trend-axis" style="width:${width}px; margin:0 auto;">${axisLabels}</div>
                         </div>
                     </div>
                 `;
@@ -1802,7 +2197,6 @@
 
             container.innerHTML = `
                     <div class="trend-wrap">
-                    <div class="chart-axis-note">纵轴：专注评分</div>
                     <div class="trend-scroll-day">
                         <svg class="trend-svg" style="width:${scrollWidth}px; min-width:${scrollWidth}px;" viewBox="0 0 ${scrollWidth} ${height}" preserveAspectRatio="none">
                             <defs>
@@ -1816,12 +2210,9 @@
                         </svg>
                         <div class="day-axis" style="width:${scrollWidth}px;">${axisTicks}</div>
                     </div>
-                    <div class="trend-meta">
-                        <span>最低 ${scaleMin.toFixed(1)}</span>
-                        <span>最高 ${scaleMax.toFixed(1)}</span>
-                    </div>
                 </div>
             `;
+            container.classList.add('chart-host');
         }
 
         function renderFocusPeriods(periods) {
@@ -1848,9 +2239,9 @@
             const items = currentFocusPeriods.map((period, index) => {
                 const statusClass = (period.state || '正常') === '压力过大' ? 'overload' : 'normal';
                 return `
-                    <button class="period-chip ${statusClass} ${index === currentSelectedPomodoroIndex ? 'active' : ''}" onclick="selectPomodoro(${index})">
+                    <button class="period-chip ${statusClass} ${index === currentSelectedPomodoroIndex ? 'active' : ''}" style="--enter-delay:${Math.min(index * 55, 360)}ms" onclick="selectPomodoro(${index})" title="${period.start_time} - ${period.end_time}｜${period.state || '正常'}｜专注 ${Number(period.focus || 0).toFixed(1)}｜压力 ${Number(period.stress || 0).toFixed(1)}">
                         <div class="period-chip-time">${period.start_time} - ${period.end_time}</div>
-                        <div class="period-chip-state">${period.state || '正常'} · 专注 ${Number(period.focus || 0).toFixed(1)} / 压力 ${Number(period.stress || 0).toFixed(1)}</div>
+                        <div class="period-chip-state">${period.state || '正常'} · ${Number(period.focus || 0).toFixed(1)} / ${Number(period.stress || 0).toFixed(1)}</div>
                     </button>
                 `;
             }).join('');
@@ -1909,6 +2300,31 @@
             document.getElementById('pieContent').innerHTML = '<div class="pie-placeholder">暂无可用数据</div>';
         }
 
+        function getClosestAvailableDateKey(targetDateKey) {
+            const availableDates = (currentCalendarIndex?.available_dates || []).map(String).sort();
+            if (!availableDates.length) {
+                return null;
+            }
+
+            if (!targetDateKey || availableDates.includes(targetDateKey)) {
+                return targetDateKey || availableDates[availableDates.length - 1];
+            }
+
+            const targetTime = parseDateKey(targetDateKey).getTime();
+            let closestDate = availableDates[0];
+            let closestDistance = Math.abs(parseDateKey(closestDate).getTime() - targetTime);
+
+            availableDates.forEach(dateKey => {
+                const distance = Math.abs(parseDateKey(dateKey).getTime() - targetTime);
+                if (distance < closestDistance) {
+                    closestDate = dateKey;
+                    closestDistance = distance;
+                }
+            });
+
+            return closestDate;
+        }
+
         function applyDashboard(summary) {
             currentDashboard = summary;
             document.getElementById('focusScore').textContent = summary.focus_score == null ? '--' : Number(summary.focus_score).toFixed(1);
@@ -1936,31 +2352,51 @@
 
         async function loadDashboardData(options = {}) {
             const { generateReport = false } = options;
-            const dateKey = formatDateKey(currentDate);
-            const params = new URLSearchParams();
-            if (currentUserId) {
-                params.set('user_id', currentUserId);
-            }
-            params.set('date', dateKey);
-            params.set('period', currentTab);
-            if (currentTab === 'day' && generateReport) {
-                params.set('generate_report', '1');
-            }
-            const url = `${API_BASE}/daily_dashboard?${params.toString()}`;
-            try {
+            const shouldGenerate = currentTab === 'day' && generateReport;
+            const requestedDateKey = formatDateKey(currentDate);
+
+            async function requestDashboard(dateKey) {
+                const params = new URLSearchParams();
+                if (currentUserId) {
+                    params.set('user_id', currentUserId);
+                }
+                params.set('date', dateKey);
+                params.set('period', currentTab);
+                if (shouldGenerate) {
+                    params.set('generate_report', '1');
+                }
+
+                const url = `${API_BASE}/daily_dashboard?${params.toString()}`;
                 const response = await fetch(url);
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
                 }
-                const data = await response.json();
+                return response.json();
+            }
+
+            try {
+                let data;
+                try {
+                    data = await requestDashboard(requestedDateKey);
+                } catch (error) {
+                    const fallbackDateKey = getClosestAvailableDateKey(requestedDateKey);
+                    const shouldRetry = currentTab === 'week' && fallbackDateKey && fallbackDateKey !== requestedDateKey;
+                    if (!shouldRetry) {
+                        throw error;
+                    }
+                    data = await requestDashboard(fallbackDateKey);
+                }
                 applyDashboard(data);
+                if (currentTab === 'day') {
+                    setDailyReportReady(!!data.ai_stress_analysis);
+                }
                 currentRangeLabel = data.range_label || null;
-                currentDate = parseDateKey(data.date || dateKey);
+                currentDate = parseDateKey(data.date || requestedDateKey);
                 updateDateDisplay();
                 return true;
             } catch (error) {
                 currentRangeLabel = currentTab === 'week' ? formatWeekRangeLabel(currentDate) : formatDate(currentDate);
-                renderDashboardError('每日数据读取失败');
+                renderDashboardError(currentTab === 'week' ? '本周数据读取失败' : '每日数据读取失败');
                 loadDailyTaskForCurrentDate();
                 updateDateDisplay();
                 return false;
@@ -1981,7 +2417,8 @@
                 currentCalendarIndex = await response.json();
                 const availableDates = new Set((currentCalendarIndex.available_dates || []).map(String));
                 if (currentCalendarIndex.min_date && !availableDates.has(formatDateKey(currentDate))) {
-                    currentDate = parseDateKey(currentCalendarIndex.min_date);
+                    const fallbackDateKey = getClosestAvailableDateKey(formatDateKey(currentDate)) || currentCalendarIndex.max_date || currentCalendarIndex.min_date;
+                    currentDate = parseDateKey(fallbackDateKey);
                 }
                 populateYearMonthSelectors();
                 renderMonthCalendar();
@@ -2463,10 +2900,15 @@
                 await new Promise(resolve => requestAnimationFrame(resolve));
                 await saveDailyTask(taskText, { refreshDashboard: false });
                 const success = await loadDashboardData({ generateReport: true });
-                setDailyReportReady(!!success);
+
+                // 只有真的有AI结果才标记
+                const hasReport = currentDashboard && currentDashboard.ai_stress_analysis;
+
+                setDailyReportReady(!!hasReport);
             } finally {
                 currentDailyReportGenerating = false;
                 updateGenerateReportButton(false);
+                renderAiAnalysis(currentDashboard);
             }
         }
 

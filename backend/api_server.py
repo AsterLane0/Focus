@@ -24,6 +24,8 @@ from .database import (
     upsert_user_ai_preference,
     get_user_daily_task,
     upsert_user_daily_task,
+    get_ai_report,
+    save_ai_report,
 )
 from src.data_loader import load_and_process_hrv_data
 from analysis.focus_model import FocusModel
@@ -59,16 +61,14 @@ RAW_DATA_PATH = (
     else Path(__file__).resolve().parent.parent / "data" / "raw" / "en_gage_hrv.csv"
 )
 
+# =====配置层======
 _HRV_DATA_CACHE: dict | None = None
 _HRV_DATA_CACHE_SOURCE: tuple[str, float, int] | None = None
 _AI_ANALYSIS_CACHE: dict[str, str] = {}
 
-
 def get_cached_hrv_data() -> dict:
     """读取并缓存原始 HRV 数据，避免每次请求都重新解析整份 CSV。"""
     global _HRV_DATA_CACHE, _HRV_DATA_CACHE_SOURCE
-    print("🔥 DEBUG: RAW_DATA_PATH =", RAW_DATA_PATH)
-    print("🔥 DEBUG: 文件存在吗 =", RAW_DATA_PATH.exists())
     try:
         stat = RAW_DATA_PATH.stat()
     except FileNotFoundError:
@@ -82,7 +82,7 @@ def get_cached_hrv_data() -> dict:
         _HRV_DATA_CACHE_SOURCE = source
     return _HRV_DATA_CACHE or {}
 
-
+# ===== AI缓存Key=====
 def _make_ai_analysis_cache_key(
     *,
     period_label: str,
@@ -128,14 +128,13 @@ def _make_ai_analysis_cache_key(
     raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)
     return hashlib.sha1(raw.encode("utf-8")).hexdigest()
 
-
+# =====数据结构=====
 class TrendPoint(BaseModel):
     time: str
     stress: float
     focus: float
     value: Optional[float] = None
     label: Optional[str] = None
-
 
 class FocusPeriod(BaseModel):
     start_time: str
@@ -146,7 +145,6 @@ class FocusPeriod(BaseModel):
     state: str = "正常"
     hrv_points: List[TrendPoint] = Field(default_factory=list)
 
-
 class RecentSession(BaseModel):
     session_id: str
     start_time: str
@@ -154,7 +152,6 @@ class RecentSession(BaseModel):
     focus_score: float
     avg_stress: float
     duration_seconds: Optional[float] = None
-
 
 class DailyDashboard(BaseModel):
     period: str
@@ -182,12 +179,10 @@ class DailyDashboard(BaseModel):
     focus_periods: List[FocusPeriod]
     recent_sessions: List[RecentSession]
 
-
 class UserAIPreference(BaseModel):
     user_id: str
     preference_text: str = ""
     updated_at: Optional[str] = None
-
 
 class UserDailyTask(BaseModel):
     user_id: str
@@ -195,7 +190,7 @@ class UserDailyTask(BaseModel):
     task_text: str = ""
     updated_at: Optional[str] = None
 
-
+# ====API接口====
 @app.get("/users", summary="获取可用用户列表", response_model=List[str])
 def list_users():
     """
@@ -205,7 +200,6 @@ def list_users():
     if not daily_data:
         raise HTTPException(status_code=404, detail="No HRV data available")
     return sorted(daily_data.keys())
-
 
 @app.get("/calendar_index", summary="获取用户可用日期索引")
 def calendar_index(user_id: Optional[str] = Query(None, description="用户 ID")):
@@ -240,7 +234,6 @@ def calendar_index(user_id: Optional[str] = Query(None, description="用户 ID")
         "max_date": available_dates[-1] if available_dates else None,
     }
 
-
 @app.get("/user_ai_preference", summary="获取用户 AI 记忆")
 def read_user_ai_preference(user_id: str = Query(..., description="用户 ID")):
     """读取某个用户保存的 AI 个人偏好。"""
@@ -258,7 +251,6 @@ def read_user_ai_preference(user_id: str = Query(..., description="用户 ID")):
         "updated_at": row[2],
     }
 
-
 @app.post("/user_ai_preference", summary="保存用户 AI 记忆")
 def save_user_ai_preference(payload: UserAIPreference):
     """保存某个用户的 AI 个人偏好。"""
@@ -273,7 +265,6 @@ def save_user_ai_preference(payload: UserAIPreference):
         "preference_text": preference_text,
         "updated_at": updated_at,
     }
-
 
 @app.get("/user_daily_task", summary="获取用户当天任务")
 def read_user_daily_task(
@@ -297,7 +288,6 @@ def read_user_daily_task(
         "updated_at": row[3],
     }
 
-
 @app.post("/user_daily_task", summary="保存用户当天任务")
 def save_user_daily_task(payload: UserDailyTask):
     """保存某个用户某一天的任务。"""
@@ -315,18 +305,16 @@ def save_user_daily_task(payload: UserDailyTask):
         "updated_at": updated_at,
     }
 
-
+# =====工具函数=====
 def format_cn_date(date_str: str) -> str:
     """把 YYYY-MM-DD 转成中文日期展示。"""
     dt = datetime.strptime(date_str, "%Y-%m-%d")
     return f"{dt.year}年{dt.month}月{dt.day}日"
 
-
 def format_short_cn_date(date_str: str) -> str:
     """把 YYYY-MM-DD 转成更短的中文日期展示。"""
     dt = datetime.strptime(date_str, "%Y-%m-%d")
     return f"{dt.month}月{dt.day}日"
-
 
 def add_clock_minutes(time_str: str, minutes: int) -> str:
     """给 HH:MM 字符串增加分钟数。"""
@@ -336,13 +324,11 @@ def add_clock_minutes(time_str: str, minutes: int) -> str:
     except ValueError:
         return time_str
 
-
 def evaluate_pomodoro_state(stress_avg: float, focus_avg: float) -> str:
     """按单个番茄钟的压力/专注度给出简单状态。"""
     if stress_avg > 60 and focus_avg < 40:
         return "压力过大"
     return "正常"
-
 
 def _format_float_value(value: Optional[float], digits: int = 1) -> str:
     if value is None:
@@ -352,7 +338,7 @@ def _format_float_value(value: Optional[float], digits: int = 1) -> str:
     except (TypeError, ValueError):
         return "--"
 
-
+# ===== 本地AI fallback=====
 def _build_local_ai_pressure_analysis(
     *,
     period_label: str,
@@ -360,12 +346,13 @@ def _build_local_ai_pressure_analysis(
     user_id: str,
     analysis_result: dict,
     recommendation: dict,
+    task_summary: str = "",
     summary_text: str,
 ) -> str:
     stress_trend = str(analysis_result.get("stress_trend") or "no data")
     focus_trend = str(analysis_result.get("focus_trend") or "no data")
     state = str(recommendation.get("state") or "正常状态")
-    task_text = str(summary_text or "").strip()
+    task_text = str(task_summary or "").strip()
     advice_text = str(recommendation.get("advice") or "可以先放慢一点，别把自己逼太紧。").strip()
 
     state_phrase = {
@@ -396,15 +383,14 @@ def _build_local_ai_pressure_analysis(
     if task_text:
         parts.append(f"你今天主要在忙的是：{task_text}。")
     parts.append(f"这一天整体{state_phrase}，{stress_phrase}，{focus_phrase}。")
-    parts.append("这种状态并不差差，但也不是那种可以完全放空的一天，还是得一边推进一边照顾节奏。")
+    parts.append("这种状态并不算差，但也不是那种可以完全放空的一天，还是得一边推进一边照顾节奏。")
     parts.append(f"接下来可以先试试：{advice_text}")
     return "\n\n".join(part for part in parts if part)
 
-
+# =====Prompt构建层=====
 def _build_daily_prompt(
     *,
     display_label: str,
-    user_id: str,
     analysis_result: dict,
     recommendation: dict,
     profile_summary: str,
@@ -443,6 +429,7 @@ def _build_daily_prompt(
 - 不要鼓励（不要“加油”）
 - 重点解释“为什么会这样”
 - 只说1-2个关键点
+- 注意格式易读，按点输出1️⃣，2️⃣，3️⃣等
 
 结构：
 1️⃣ 先判断今天状态（一句话）
@@ -459,6 +446,7 @@ def _build_weekly_prompt(
     recommendation: dict,
     profile_summary: str,
     user_preference: str,
+    task_summary: str,
 ) -> str:
 
     stress_average = _format_float_value(analysis_result.get("stress_average"))
@@ -468,50 +456,43 @@ def _build_weekly_prompt(
     focus_trend = str(analysis_result.get("focus_trend") or "no data")
 
     return f"""
-你是一个理性但不冷冰冰的学习分析者，说话像一个会认真观察人的朋友。
+你是一个基于数据做判断的学习分析者，不允许凭空猜测。
 
-【用户风格偏好】
-{user_preference or "无明显偏好"}
-
-【这个人的长期状态】
+【用户长期状态】
 {profile_summary}
 
-⚠️ 注意：这是“一个星期”的整体趋势分析，不是某一天。
+【本周任务】
+{task_summary}
 
-时间范围：{display_label}
-平均压力：{stress_average}
-平均专注：{focus_average}
-趋势：压力{stress_trend}，专注{focus_trend}
-学习次数：{study_count}
+【数据】
+- 平均压力：{stress_average}
+- 平均专注：{focus_average}
+- 趋势：压力{stress_trend}，专注{focus_trend}
+- 学习次数：{study_count}
 
-要求：
-- 不要逐天复述
-- 抓整体趋势
-- 找一个核心问题
-- 解释“为什么这一周会这样”
-- 给一个下周可执行建议
+⚠️ 强约束：
+- 必须基于“数据变化”推断原因，不允许空泛描述
+- 如果出现“学习次数多但专注下降”，必须解释为“可能存在疲劳或效率下降”
+- 不允许说“可能是因为任务难”这种泛化推测
+- 建议必须具体到行为（例如：缩短学习时长 / 调整节奏）
+- 注意格式易读，按点输出1️⃣，2️⃣，3️⃣等
 
-输出：3-4句自然中文
+输出结构：
+1️⃣ 一句话总结本周状态（必须包含趋势）
+2️⃣ 用“数据之间的关系”解释原因
+3️⃣ 给一个具体行为建议
+
+输出：3句话
 """
 
+# =====AI解析层=====
 def _extract_doubao_response_text(data):
     try:
-        return data["choices"][0]["message"]["content"]
+        return data["choices"][0]["message"]["content"].strip()
     except Exception:
         return None
 
-    choices = payload.get("choices")
-    if isinstance(choices, list) and choices:
-        first = choices[0] if isinstance(choices[0], dict) else {}
-        message = first.get("message", {})
-        if isinstance(message, dict):
-            content = message.get("content")
-            if isinstance(content, str) and content.strip():
-                return content.strip()
-
-    return ""
-
-
+# =====用户画像层=====
 def _build_user_profile_summary(
     *,
     user_data: dict,
@@ -650,7 +631,6 @@ def _build_user_profile_summary(
         "text": profile_text
     }
 
-
 def _build_task_summary(
     user_id: str,
     task_date: str,
@@ -672,10 +652,10 @@ def _build_task_summary(
         return str(row[2]).strip()
     return "今天还没有写具体任务。"
 
-
-def build_ai_daily_pressure_analysis(
+# =====AI主函数=====
+def build_ai_analysis(
     *,
-    period_label: str,
+    period: str,
     display_label: str,
     user_id: str,
     analysis_result: dict,
@@ -684,10 +664,13 @@ def build_ai_daily_pressure_analysis(
     user_preference: str = "",
     task_summary: str = "",
     focus_periods: list[FocusPeriod] | None = None,
+    generate_report: bool = False,
 ) -> str:
     """
     使用豆包生成压力分析。若未配置密钥或请求失败，则回退到本地摘要。
     """
+    # Normalize user_id for isolation and cache
+    safe_user_id = str(user_id).strip() if user_id else "default"
     state = str(recommendation.get("state") or "正常状态")
     if focus_periods:
         normal_count = sum(1 for period in focus_periods if period.state == "正常")
@@ -701,10 +684,17 @@ def build_ai_daily_pressure_analysis(
     else:
         summary_text = "当天整体状态可以先按当前判断来理解。"
 
+    existing = get_ai_report(safe_user_id, display_label, period)
+    if existing and not generate_report:
+        return existing
+
+    if not generate_report:
+        return None
+
     cache_key = _make_ai_analysis_cache_key(
-        period_label=period_label,
+        period_label=period,
         display_label=display_label,
-        user_id=user_id,
+        user_id=safe_user_id,
         analysis_result=analysis_result,
         recommendation=recommendation,
         profile_summary=profile_summary,
@@ -714,68 +704,50 @@ def build_ai_daily_pressure_analysis(
         focus_periods=focus_periods,
     )
     cached_text = _AI_ANALYSIS_CACHE.get(cache_key)
-    if cached_text:
+    if cached_text and not generate_report:
         return cached_text
 
     api_key = os.getenv("ARK_API_KEY", os.getenv("DOUBAO_API_KEY", "")).strip()
-    print("🔥 DEBUG: API KEY =", api_key)
-
     if not api_key:
+        # 如果用户没有主动生成报告，不允许 fallback 自动生成
+        if not generate_report:
+            return None
         result = _build_local_ai_pressure_analysis(
-            period_label=period_label,
+            period_label=period,
             display_label=display_label,
-            user_id=user_id,
+            user_id=safe_user_id,
             analysis_result=analysis_result,
             recommendation=recommendation,
-            summary_text="\n\n".join(
-                part
-                for part in [
-                    profile_summary.strip(),
-                    user_preference.strip(),
-                    task_summary.strip(),
-                    summary_text.strip(),
-                ]
-                if part
-            ),
+            task_summary=task_summary,
+            summary_text=summary_text,
         )
         _AI_ANALYSIS_CACHE[cache_key] = result
         return result
     base_url = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
     model_name = os.getenv("DOUBAO_MODEL", "Doubao-pro-32k").strip()
 
-    stress_average = _format_float_value(analysis_result.get("stress_average"))
-    focus_average = _format_float_value(analysis_result.get("focus_average"))
-    study_count = int(analysis_result.get("study_count") or 0)
-    stress_trend = str(analysis_result.get("stress_trend") or "no data")
-    focus_trend = str(analysis_result.get("focus_trend") or "no data")
-    advice = str(recommendation.get("advice") or "")
-
-    if period_label == "day":
+    # prompt logic
+    if period == "day":
         prompt = _build_daily_prompt(
-            user_id=user_id,
             display_label=display_label,
+            analysis_result=analysis_result,
+            recommendation=recommendation,
+            profile_summary=profile_summary,
+            user_preference=user_preference,
             task_summary=task_summary,
-            stress_average=stress_average,
-            focus_average=focus_average,
-            stress_trend=stress_trend,
-            focus_trend=focus_trend,
-            study_count=study_count,
-            advice=advice,
-            summary_text=summary_text,
         )
     else:
         prompt = _build_weekly_prompt(
             display_label=display_label,
-            stress_average=stress_average,
-            focus_average=focus_average,
-            stress_trend=stress_trend,
-            focus_trend=focus_trend,
-            study_count=study_count,
-            profile_text=profile_summary,
+            analysis_result=analysis_result,
+            recommendation=recommendation,
+            profile_summary=profile_summary,
+            user_preference=user_preference,
+            task_summary=task_summary,
         )
 
     payload = {
-        "model": "doubao-1-5-pro-32k-250115",
+        "model": model_name,
         "messages": [
             {"role": "system", "content": "你是一个严谨认真的学习复盘助手"},
             {"role": "user", "content": prompt}
@@ -783,7 +755,6 @@ def build_ai_daily_pressure_analysis(
         "temperature": 0.3,
         "max_tokens": 150
     }
-    print("🔥 DEBUG payload =", payload)
 
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -791,7 +762,6 @@ def build_ai_daily_pressure_analysis(
     }
 
     try:
-        print("🔥 DEBUG: 正在调用豆包API")
         response = requests.post(
             base_url,
             json=payload,
@@ -800,28 +770,33 @@ def build_ai_daily_pressure_analysis(
         )
         response.raise_for_status()
         data = response.json()
-
-        print("🔥 RAW RESPONSE =", data)
         content = _extract_doubao_response_text(data)
-        print("🔥 AI content =", content)
         if content:
+            try:
+                save_ai_report(safe_user_id, display_label, period, content)
+            except Exception as e:
+                logger.warning(f"save_ai_report failed: {e}")
             _AI_ANALYSIS_CACHE[cache_key] = content
             return content
     except Exception as exc:
         logger.warning(
             "Doubao %s analysis failed for %s %s: %s",
-            period_label,
-            user_id,
+            period,
+            safe_user_id,
             display_label,
             exc,
         )
 
+    # 如果用户没有主动生成报告，不允许 fallback 自动生成
+    if not generate_report:
+        return None
     result = _build_local_ai_pressure_analysis(
-        period_label=period_label,
+        period_label=period,
         display_label=display_label,
-        user_id=user_id,
+        user_id=safe_user_id,
         analysis_result=analysis_result,
         recommendation=recommendation,
+        task_summary=task_summary,
         summary_text="\n\n".join(
             part
             for part in [
@@ -836,7 +811,7 @@ def build_ai_daily_pressure_analysis(
     _AI_ANALYSIS_CACHE[cache_key] = result
     return result
 
-
+# =====特征工程层=====
 def build_hrv_trend_points(history_dict: dict, date_key: Optional[str] = None) -> List[TrendPoint]:
     """把单日 HR 数据转成 HRV 曲线点（RMSSD）。"""
     model = FocusModel()
@@ -1026,17 +1001,13 @@ def week_bounds(date_str: str) -> tuple[str, str]:
     week_end = week_start + timedelta(days=6)
     return week_start.strftime("%Y-%m-%d"), week_end.strftime("%Y-%m-%d")
 
-
+# =====核心调度层=====
 def build_daily_dashboard(
     user_id: Optional[str] = None,
     date: Optional[str] = None,
     period: str = "day",
     generate_report: bool = True
 ) -> DailyDashboard:
-
-    print("🔥 DEBUG: period =", period)
-    print("🔥 DEBUG: generate_report =", generate_report)
-
     daily_data = get_cached_hrv_data()
     if not daily_data:
         raise HTTPException(status_code=404, detail="No HRV data available")
@@ -1046,24 +1017,45 @@ def build_daily_dashboard(
         raise HTTPException(status_code=404, detail=f"User not found: {selected_user_id}")
 
     user_data = daily_data[selected_user_id]
-    if date is None or date not in user_data:
-        raise HTTPException(status_code=404, detail=f"Date not found for user {selected_user_id}: {date}")
+    available_dates = sorted(user_data.keys())
+    if not available_dates:
+        raise HTTPException(status_code=404, detail=f"No dates found for user {selected_user_id}")
 
-    target_date = date
+    requested_date = str(date) if date is not None else available_dates[-1]
 
-    # ====== 周数据（但不 return）======
-    weekly_dashboard = None
+    # ====== 如果是周，允许用周内任一有数据日期做聚合，并在整周无数据时回退到最近一周 ======
     if period == "week":
-        week_start, week_end = week_bounds(target_date)
+        week_start, week_end = week_bounds(requested_date)
         selected_dates = [
             date_key
-            for date_key in sorted(user_data.keys())
+            for date_key in available_dates
             if week_start <= date_key <= week_end
         ]
-        if not selected_dates:
-            selected_dates = [target_date]
 
-        weekly_dashboard = build_weekly_dashboard(
+        if not selected_dates:
+            requested_dt = datetime.strptime(requested_date, "%Y-%m-%d")
+            fallback_date = min(
+                available_dates,
+                key=lambda date_key: abs(datetime.strptime(date_key, "%Y-%m-%d") - requested_dt),
+            )
+            week_start, week_end = week_bounds(fallback_date)
+            selected_dates = [
+                date_key
+                for date_key in available_dates
+                if week_start <= date_key <= week_end
+            ]
+            target_date = fallback_date
+        else:
+            if requested_date in selected_dates:
+                target_date = requested_date
+            else:
+                requested_dt = datetime.strptime(requested_date, "%Y-%m-%d")
+                target_date = min(
+                    selected_dates,
+                    key=lambda date_key: abs(datetime.strptime(date_key, "%Y-%m-%d") - requested_dt),
+                )
+
+        return build_weekly_dashboard(
             selected_user_id,
             target_date,
             week_start,
@@ -1071,6 +1063,11 @@ def build_daily_dashboard(
             selected_dates,
             user_data,
         )
+
+    if requested_date not in user_data:
+        raise HTTPException(status_code=404, detail=f"Date not found for user {selected_user_id}: {requested_date}")
+
+    target_date = requested_date
 
     # ====== 日数据 ======
     history_dict = user_data[target_date]
@@ -1093,46 +1090,21 @@ def build_daily_dashboard(
 
     # ====== AI ======
     ai_stress_analysis = None
-    print("🔥 DEBUG: 即将判断是否进入AI")
+    if period == "day":
+        ai_stress_analysis = build_ai_analysis(
+            period="day",
+            display_label=target_date,
+            user_id=selected_user_id,
+            analysis_result=analysis_result,
+            recommendation=recommendation,
+            profile_summary="",
+            user_preference=user_preference,
+            task_summary=user_daily_task,
+            focus_periods=focus_periods,
+            generate_report=generate_report,
+        )
 
-    if generate_report:
-
-        if period == "day":
-            print("🔥 进入日分析")
-
-            ai_stress_analysis = build_ai_daily_pressure_analysis(
-                period_label="今日",
-                display_label=format_cn_date(target_date),
-                user_id=selected_user_id,
-                analysis_result=analysis_result,
-                recommendation=recommendation,
-                user_preference=user_preference,
-                task_summary=user_daily_task,
-                focus_periods=focus_periods,
-            )
-
-        elif period == "week":
-            print("🔥 进入周分析")
-
-            ai_stress_analysis = build_ai_daily_pressure_analysis(
-                period_label="本周",
-                display_label=weekly_dashboard.range_label if weekly_dashboard else "",
-                user_id=selected_user_id,
-                analysis_result=analysis_result,
-                recommendation=recommendation,
-                user_preference=user_preference,
-                task_summary=user_daily_task,
-                focus_periods=focus_periods,
-            )
-
-    print("🔥 AI结果 =", ai_stress_analysis)
-
-    # ====== 如果是周 → 返回周结构 ======
-    if period == "week" and weekly_dashboard:
-        weekly_dashboard.ai_stress_analysis = ai_stress_analysis
-        return weekly_dashboard
-
-    # ====== 否则返回日 ======
+    # ====== 返回日 ======
     recent_sessions = [
         RecentSession(
             session_id=row[0],
@@ -1184,7 +1156,6 @@ def build_daily_dashboard(
         focus_periods=focus_periods,
         recent_sessions=recent_sessions,
     )
-
 
 def build_weekly_dashboard(
     user_id: str,
@@ -1244,15 +1215,19 @@ def build_weekly_dashboard(
     report = ReportGenerator().generate(analysis_result, recommendation)
     current_task_row = get_user_daily_task(user_id, target_date)
     user_daily_task = str(current_task_row[2] or "").strip() if current_task_row else ""
-    ai_stress_analysis = build_ai_daily_pressure_analysis(
-        period_label="本周",
-        display_label=f"{format_short_cn_date(week_start)} - {format_short_cn_date(week_end)}",
+    week_display_label = f"{format_short_cn_date(week_start)} - {format_short_cn_date(week_end)}"
+    existing_week_report = get_ai_report(user_id, week_display_label, "week")
+    ai_stress_analysis = build_ai_analysis(
+        period="week",
+        display_label=week_display_label,
         user_id=user_id,
         analysis_result=analysis_result,
         recommendation=recommendation,
+        profile_summary="",
         user_preference=user_preference,
-        task_summary=_build_daily_task_summary(user_id, target_date, selected_dates=selected_dates, user_data=user_data),
+        task_summary=_build_task_summary(user_id, target_date, selected_dates=selected_dates, user_data=user_data),
         focus_periods=weekly_focus_periods,
+        generate_report=not bool(existing_week_report),
     )
     recent_sessions = [
         RecentSession(
@@ -1277,7 +1252,7 @@ def build_weekly_dashboard(
         period="week",
         user_id=user_id,
         date=target_date,
-        range_label=f"{format_short_cn_date(week_start)} - {format_short_cn_date(week_end)}",
+        range_label=week_display_label,
         start_date=week_start,
         end_date=week_end,
         focus_score=float(report.get("focus_average") or 0.0),

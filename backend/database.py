@@ -54,6 +54,16 @@ def init_db() -> None:
                     PRIMARY KEY (user_id, task_date)
                 )
             """)
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS ai_report (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT,
+                display_label TEXT,
+                period TEXT,
+                report_text TEXT,
+                UNIQUE(user_id, display_label, period)
+            )
+        """)
             conn.commit()
         logger.info(f"Database initialized at {DB_PATH}")
     except sqlite3.Error as e:
@@ -202,4 +212,45 @@ def upsert_user_daily_task(user_id: str, task_date: str, task_text: str, updated
         return True
     except sqlite3.Error as e:
         logger.error(f"Failed to save daily task for {user_id} {task_date}: {e}")
+        return False
+
+# =====AI输出记录=====
+def get_ai_report(user_id: str, display_label: str, period: str) -> Optional[str]:
+    """读取某个用户在指定日期/周期下已经生成过的 AI 报告。"""
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT report_text
+                FROM ai_report
+                WHERE user_id = ? AND display_label = ? AND period = ?
+                """,
+                (user_id, display_label, period),
+            )
+            row = cursor.fetchone()
+        return row[0] if row else None
+    except sqlite3.Error as e:
+        logger.error(f"Failed to get AI report for {user_id} {display_label} {period}: {e}")
+        return None
+
+
+def save_ai_report(user_id: str, display_label: str, period: str, report_text: str) -> bool:
+    """保存或更新某个用户在指定日期/周期下的 AI 报告。"""
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO ai_report (user_id, display_label, period, report_text)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(user_id, display_label, period) DO UPDATE SET
+                    report_text = excluded.report_text
+                """,
+                (user_id, display_label, period, report_text),
+            )
+            conn.commit()
+        return True
+    except sqlite3.Error as e:
+        logger.error(f"Failed to save AI report for {user_id} {display_label} {period}: {e}")
         return False
