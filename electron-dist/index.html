@@ -96,6 +96,22 @@
             overflow: hidden;
             will-change: left;
             background: rgba(255, 255, 255, 0.7);
+            opacity: 1;
+            transform: translateX(0) scale(1);
+            transition:
+                left 340ms cubic-bezier(0.2, 0.82, 0.24, 1),
+                transform 340ms cubic-bezier(0.2, 0.82, 0.24, 1),
+                opacity 280ms ease;
+        }
+
+        .page.is-offscreen-left {
+            opacity: 0.82;
+            transform: translateX(-8px) scale(0.985);
+        }
+
+        .page.is-offscreen-right {
+            opacity: 0.82;
+            transform: translateX(8px) scale(0.985);
         }
 
         .page-inner {
@@ -363,6 +379,135 @@
             font-size: 10px;
         }
 
+        .login-page .page-inner {
+            overflow: hidden;
+        }
+
+        .login-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            width: 100%;
+            height: 100%;
+            padding: 34px 20px 28px;
+        }
+
+        .login-mark {
+            width: 28px;
+            height: 28px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(118, 75, 162, 0.12);
+            color: #6d49b4;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .login-copy {
+            text-align: center;
+        }
+
+        .login-title {
+            font-size: 18px;
+            line-height: 1.08;
+            color: #5f3fa8;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-bottom: 6px;
+        }
+
+        .login-subtitle {
+            max-width: 150px;
+            font-size: 8px;
+            color: #8f84a8;
+            line-height: 1.5;
+        }
+
+        .login-card {
+            width: 154px;
+            padding: 0;
+        }
+
+        .login-field-label {
+            font-size: 7px;
+            color: #8f84a8;
+            margin-bottom: 6px;
+            text-align: left;
+        }
+
+        .login-select-wrap {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .login-select-wrap::after {
+            content: "▾";
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7d63b3;
+            font-size: 9px;
+            pointer-events: none;
+        }
+
+        .login-select {
+            width: 100%;
+            height: 30px;
+            border-radius: 10px;
+            border: 1px solid rgba(118, 75, 162, 0.14);
+            background: rgba(255, 255, 255, 0.88);
+            color: #433465;
+            font-size: 10px;
+            padding: 0 30px 0 10px;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+        }
+
+        .login-select:focus {
+            border-color: rgba(118, 75, 162, 0.22);
+            box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.05);
+        }
+
+        .login-button {
+            width: 100%;
+            height: 31px;
+            border: none;
+            border-radius: 999px;
+            background: var(--primary-gradient-soft);
+            color: #fff;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            box-shadow: 0 8px 18px rgba(118, 75, 162, 0.18);
+            transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+        }
+
+        .login-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(118, 75, 162, 0.22);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+            box-shadow: 0 6px 14px rgba(118, 75, 162, 0.18);
+        }
+
+        .login-hint {
+            max-width: 150px;
+            font-size: 7px;
+            color: #aa9dc1;
+            text-align: center;
+            line-height: 1.45;
+        }
+
         /* 统计页面样式 */
         .stats-header {
             display: flex;
@@ -394,7 +539,7 @@
             overflow-y: scroll;
             overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
-            padding: 0 12px;
+            padding: 4px 12px 0;
             pointer-events: auto;
             -webkit-app-region: drag;
         }
@@ -413,24 +558,44 @@
         .tab-buttons {
             display: flex;
             gap: 6px;
+            margin-top: 4px;
             margin-bottom: 12px;
             justify-content: flex-start;
             padding-left: 10px;
+            padding-top: 2px;
         }
 
         .tab-btn {
             padding: 4px 8px;
             border: none;
             border-radius: 10px;
-            background: #ddd;
+            background: rgba(60, 60, 67, 0.12);
             color: #666;
             font-size: 8px;
             cursor: pointer;
+            transform: translateY(0);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+            transition:
+                background 180ms ease,
+                color 180ms ease,
+                box-shadow 220ms ease,
+                transform 180ms ease,
+                filter 180ms ease;
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-1px);
+            filter: saturate(1.02);
+        }
+
+        .tab-btn:active {
+            transform: translateY(0) scale(0.98);
         }
 
         .tab-btn.active {
             background: var(--primary-gradient);
             color: white;
+            box-shadow: 0 8px 16px rgba(118, 75, 162, 0.16);
         }
 
         .date-nav {
@@ -466,14 +631,16 @@
             border-radius: 10px;
             background: rgba(255, 255, 255, 0.55);
             border: 1px solid rgba(118, 75, 162, 0.08);
+            overflow: hidden;
         }
 
         .calendar-panel-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            gap: 8px;
+            align-items: center;
+            gap: 6px;
             margin-bottom: 6px;
+            flex-wrap: nowrap;
         }
 
         .calendar-title {
@@ -481,9 +648,13 @@
             font-weight: 600;
             line-height: 1.05;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
+            align-items: baseline;
             gap: 1px;
-            min-width: 44px;
+            min-width: 0;
+            white-space: nowrap;
+            flex-shrink: 0;
+            letter-spacing: 0;
         }
 
         .calendar-title-year {
@@ -491,27 +662,36 @@
         }
 
         .calendar-title-month {
-            font-size: 8px;
+            font-size: 7.6px;
         }
 
         .calendar-legend {
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 7px;
+            justify-content: flex-end;
+            gap: 3px;
+            font-size: 5.6px;
             color: #9a92ad;
+            min-width: 0;
+            flex: 1;
+            flex-wrap: nowrap;
+            overflow: hidden;
+            white-space: nowrap;
         }
 
         .calendar-legend-item {
             display: flex;
             align-items: center;
-            gap: 3px;
+            gap: 1px;
             white-space: nowrap;
+            flex-shrink: 1;
+            min-width: 0;
         }
 
         .calendar-legend-dot {
-            width: 7px;
-            height: 7px;
+            width: 5px;
+            height: 5px;
+            min-width: 5px;
             border-radius: 50%;
             display: inline-block;
             background: rgba(118, 75, 162, 0.2);
@@ -550,6 +730,8 @@
             background: rgba(118, 75, 162, 0.05);
             cursor: default;
             user-select: none;
+            transform: translateZ(0);
+            transition: transform 140ms ease, box-shadow 160ms ease, background 160ms ease;
         }
 
         .calendar-cell.blank {
@@ -568,6 +750,18 @@
             color: #fff;
         }
 
+        .calendar-cell.has-data:active {
+            transform: scale(0.98);
+        }
+
+        .calendar-cell.is-clicking {
+            animation: calendarCellTap 180ms ease-out;
+        }
+
+        .calendar-cell.selected.is-clicking {
+            box-shadow: 0 0 0 2px rgba(139, 99, 220, 0.10);
+        }
+
         .calendar-cell.disabled {
             opacity: 0.35;
         }
@@ -579,6 +773,27 @@
             height: 4px;
             border-radius: 50%;
             background: var(--primary-solid);
+        }
+
+        @keyframes calendarCellTap {
+            0% {
+                transform: scale(1);
+            }
+            45% {
+                transform: scale(0.97);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .page,
+            .calendar-cell,
+            .calendar-cell.is-clicking {
+                transition: none !important;
+                animation: none !important;
+            }
         }
 
         .date-btn {
@@ -927,6 +1142,61 @@
             stroke-dasharray: 3 4;
         }
 
+        .chart-grid-line.week-vertical {
+            stroke: rgba(139, 99, 220, 0.12);
+            stroke-dasharray: 3 7;
+        }
+
+        .chart-grid-line.week-horizontal {
+            stroke: rgba(139, 99, 220, 0.09);
+            stroke-dasharray: none;
+        }
+
+        .week-chart-surface {
+            fill: url(#weekAreaGradient);
+        }
+
+        .week-chart-ghost-line {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.58);
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .week-chart-line {
+            fill: none;
+            stroke: url(#weekLineGradient);
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            filter: drop-shadow(0 4px 10px rgba(139, 99, 220, 0.16));
+        }
+
+        .week-point-ring {
+            fill: rgba(255, 255, 255, 0.84);
+            stroke: rgba(139, 99, 220, 0.24);
+            stroke-width: 1;
+        }
+
+        .week-point-core {
+            fill: url(#weekLineGradient);
+        }
+
+        .week-point-core.selected {
+            filter: drop-shadow(0 0 8px rgba(139, 99, 220, 0.34));
+        }
+
+        .week-point-missing-ring {
+            fill: rgba(255, 255, 255, 0.34);
+            stroke: rgba(186, 170, 217, 0.5);
+            stroke-width: 1;
+        }
+
+        .week-point-missing-core {
+            fill: rgba(186, 170, 217, 0.34);
+        }
+
         .selected-point-halo {
             filter: blur(2px);
         }
@@ -1264,7 +1534,7 @@
             position: relative;
             border-radius: 10px;
             border: 1px solid rgba(139, 99, 220, 0.5);
-            box-shadow: 0 0 10px rgba(139, 99, 220, 0.25);
+            box-shadow: 0 0 6px rgba(139, 99, 220, 0.18);
             transition: all 0.2s ease;
         }
 
@@ -1273,17 +1543,17 @@
             position: absolute;
             bottom: 4px;
             right: 4px;
-            width: 6px;
-            height: 6px;
+            width: 5px;
+            height: 5px;
             background: #8b63dc;
             border-radius: 50%;
-            box-shadow: 0 0 6px rgba(139, 99, 220, 0.9);
+            box-shadow: 0 0 4px rgba(139, 99, 220, 0.55);
         }
 
         /* hover（质感） */
         .calendar-cell.has-report:hover {
             transform: translateY(-1px) scale(1.05);
-            box-shadow: 0 4px 12px rgba(139, 99, 220, 0.4);
+            box-shadow: 0 4px 8px rgba(139, 99, 220, 0.24);
         }
 
         /* 选中 + 有报告 */
@@ -1301,7 +1571,7 @@
         /* 图例 */
         .calendar-legend-dot.has-report {
             background: #8b63dc;
-            box-shadow: 0 0 6px rgba(139, 99, 220, 0.8);
+            box-shadow: 0 0 3px rgba(139, 99, 220, 0.28);
         }
     </style>
 </head>
@@ -1312,18 +1582,22 @@
             <!-- 登录页面 -->
             <div class="page login-page" id="loginPage" style="left: 0;">
                 <div class="page-inner">
-                    <div class="main-content">
-                        <h3 style="margin-bottom: 14px; color: #5e3f8f;">欢迎登录</h3>
-
-                        <div style="margin-bottom: 10px; font-size: 12px; color: #666;">请选择你的用户</div>
-
-                        <select id="loginUserSelect" style="width: 160px; height: 28px; border-radius: 8px; border: 1px solid #ccc; padding: 0 8px; margin-bottom: 14px;">
-                            <option value="">加载中...</option>
-                        </select>
-
-                        <button onclick="loginUser()" style="width: 120px; height: 30px; border: none; border-radius: 8px; background: #764ba2; color: white; cursor: pointer;">
-                            登录
-                        </button>
+                    <div class="login-content">
+                        <div class="login-mark">F</div>
+                        <div class="login-copy">
+                            <div class="login-title">欢迎登录</div>
+                            <div class="login-subtitle">选择你的用户，继续今天的专注记录。</div>
+                        </div>
+                        <div class="login-card">
+                            <div class="login-field-label">当前用户</div>
+                            <div class="login-select-wrap">
+                                <select id="loginUserSelect" class="login-select">
+                                    <option value="">加载中...</option>
+                                </select>
+                            </div>
+                            <button onclick="loginUser()" class="login-button">登录</button>
+                        </div>
+                        <div class="login-hint">登录后会同步该用户的日历、任务和分析记录。</div>
                     </div>
                 </div>
             </div>
@@ -1502,6 +1776,20 @@
     </div>
 
     <script>
+        function syncPageTransitionState() {
+            ['mainPage', 'statsPage', 'piePage'].forEach(id => {
+                const page = document.getElementById(id);
+                if (!page) return;
+                const left = Number.parseFloat(page.style.left || '0');
+                page.classList.remove('is-offscreen-left', 'is-offscreen-right');
+                if (left < 0) {
+                    page.classList.add('is-offscreen-left');
+                } else if (left > 0) {
+                    page.classList.add('is-offscreen-right');
+                }
+            });
+        }
+
         function showLoginPage() {
             document.getElementById('loginPage').style.display = 'block';
             document.getElementById('mainPage').style.display = 'none';
@@ -1514,6 +1802,7 @@
             document.getElementById('mainPage').style.display = 'block';
             document.getElementById('statsPage').style.display = 'block';
             document.getElementById('piePage').style.display = 'block';
+            syncPageTransitionState();
         }
 
         function toggleAiPreferencePanel() {
@@ -1585,6 +1874,7 @@
             }
             currentFocusPeriods = [];
             currentSelectedPomodoroIndex = 0;
+            currentSelectedWeekPointIndex = -1;
             currentRangeLabel = null;
             currentTab = 'day';
             currentDate = new Date(today);
@@ -1635,7 +1925,10 @@
         }
 
         window.addEventListener('resize', handleResize);
-        window.addEventListener('load', handleResize);
+        window.addEventListener('load', () => {
+            handleResize();
+            syncPageTransitionState();
+        });
 
         const today = new Date();
         let currentDate = new Date(today);
@@ -1646,6 +1939,7 @@
         let currentRangeLabel = null;
         let currentFocusPeriods = [];
         let currentSelectedPomodoroIndex = 0;
+        let currentSelectedWeekPointIndex = -1;
         let currentPomodoroCurvePoints = [];
         let currentSelectedCurvePointIndex = 0;
         let currentTodayPomodoroCount = null;
@@ -1653,6 +1947,8 @@
         let currentDailyReportReady = false;
         let currentDailyReportGenerating = false;
         let currentAiPreference = '';
+        let currentAnimatingCalendarDateKey = '';
+        let calendarTapAnimationTimer = null;
         let dailyTaskSaveTimer = null;
         let aiPreferenceSaveTimer = null;
         let currentCalendarIndex = {
@@ -1664,7 +1960,7 @@
             max_date: null,
         };
 
-        const API_BASE = 'http://127.0.0.1:8000';
+        const API_BASE = `${window.location.protocol}//${window.location.hostname}:8000`;
 
         function formatDate(date) {
             return date.getFullYear() + '年' + (date.getMonth() + 1) + '月' + date.getDate() + '日';
@@ -1745,6 +2041,7 @@
                 if (hasReport) classes.push('has-report');
 
                 if (isSelected) classes.push('selected');
+                if (dateKey === currentAnimatingCalendarDateKey) classes.push('is-clicking');
                 if (!hasData) classes.push('disabled');
                 const label = day;
                 cells.push(`
@@ -2055,7 +2352,7 @@
                 if (currentSegment.length > 1) segments.push(currentSegment.slice());
 
                 const lineMarkup = segments.map(segment => `
-                    <polyline points="${segment.join(' ')}" fill="none" stroke="${accent}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                    <polyline points="${segment.join(' ')}" fill="none" stroke="url(#chartGradient)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></polyline>
                 `).join('');
 
                 const hasSelection = currentSelectedWeekPointIndex >= 0 && currentSelectedWeekPointIndex < coords.length && !!coords[currentSelectedWeekPointIndex];
@@ -2068,7 +2365,10 @@
                     if (!point) {
                         return `
                             <g>
-                                <circle cx="${x}" cy="${height / 2}" r="2.5" fill="#d9ccea" opacity="0.45"></circle>
+                                <circle cx="${x}" cy="${height / 2}" r="6.5" fill="rgba(198,168,255,0.25)"></circle>
+                                <circle cx="${x}" cy="${height / 2}" r="9" fill="transparent">
+                                    <title>暂无数据</title>
+                                </circle>
                             </g>
                         `;
                     }
@@ -2076,7 +2376,7 @@
                         <g data-point-hit="1" style="cursor:pointer" onclick="selectWeekTrendPoint(${index}, event)">
                             ${isSelected ? `<circle class="selected-point-halo" cx="${point.x}" cy="${point.y}" r="9" fill="${accent}" opacity="0.18"></circle>` : ''}
                             <circle cx="${point.x}" cy="${point.y}" r="${isSelected ? 5.5 : 4.5}" fill="${accent}" opacity="${isSelected ? '1' : '0.92'}"></circle>
-                            <circle cx="${point.x}" cy="${point.y}" r="6.5" fill="transparent">
+                            <circle cx="${point.x}" cy="${point.y}" r="9" fill="transparent">
                                 <title>${points[index].time || ''}: ${points[index].value?.toFixed(1) ?? '--'}</title>
                             </circle>
                         </g>
@@ -2089,6 +2389,8 @@
                         <line class="chart-grid-line" x1="${x}" y1="${paddingTop}" x2="${x}" y2="${xAxisY}"></line>
                     `;
                 }).join('');
+
+                const xAxisRight = axisX + Math.max(0, points.length - 1) * stepX;
 
                 const axisLabels = points.map((point, index) => {
                     const x = axisX + index * stepX;
@@ -2114,13 +2416,18 @@
                     `;
                 }
 
-                const xAxisRight = axisX + Math.max(0, points.length - 1) * stepX;
-
                 container.innerHTML = `
                     <div class="trend-wrap trend-wrap-week" onclick="clearWeekTrendSelection(event)">
                         <div class="trend-chart-box" style="width:${width}px;" onclick="clearWeekTrendSelection(event)">
                             <div class="chart-x-axis-line" style="left:${axisX - 3}px; width:${xAxisRight - axisX + 3}px; top:${xAxisY}px;"></div>
-                            <svg class="trend-svg trend-svg-week" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+                            <svg class="trend-svg trend-svg-week" style="width:${width}px; height:${height}px; display:block; margin:0 auto;" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet">
+                                <defs>
+                                    <linearGradient id="chartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#c7a8ff"></stop>
+                                        <stop offset="55%" stop-color="#9163e8"></stop>
+                                        <stop offset="100%" stop-color="#6f47b8"></stop>
+                                    </linearGradient>
+                                </defs>
                                 ${gridMarkup}
                                 ${lineMarkup}
                                 ${dotMarkup}
@@ -2327,6 +2634,7 @@
 
         function applyDashboard(summary) {
             currentDashboard = summary;
+            currentSelectedWeekPointIndex = -1;
             document.getElementById('focusScore').textContent = summary.focus_score == null ? '--' : Number(summary.focus_score).toFixed(1);
             document.getElementById('totalTime').textContent = summary.total_minutes == null ? '--' : summary.total_minutes;
             document.getElementById('focusTime').textContent = summary.focus_minutes == null ? '--' : summary.focus_minutes;
@@ -2369,7 +2677,14 @@
                 const url = `${API_BASE}/daily_dashboard?${params.toString()}`;
                 const response = await fetch(url);
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
+                    let detail = '';
+                    try {
+                        const text = await response.text();
+                        detail = text ? ` ${text}` : '';
+                    } catch (error) {
+                        detail = '';
+                    }
+                    throw new Error(`HTTP ${response.status}${detail}`);
                 }
                 return response.json();
             }
@@ -2396,7 +2711,10 @@
                 return true;
             } catch (error) {
                 currentRangeLabel = currentTab === 'week' ? formatWeekRangeLabel(currentDate) : formatDate(currentDate);
-                renderDashboardError(currentTab === 'week' ? '本周数据读取失败' : '每日数据读取失败');
+                console.error('dashboard load failed:', error);
+                const prefix = currentTab === 'week' ? '本周数据读取失败' : '每日数据读取失败';
+                const detail = error && error.message ? `：${String(error.message).replace(/^Error:\s*/, '')}` : '';
+                renderDashboardError(`${prefix}${detail}`);
                 loadDailyTaskForCurrentDate();
                 updateDateDisplay();
                 return false;
@@ -2486,6 +2804,12 @@
             populateYearMonthSelectors();
         }
 
+        async function refreshCalendarAndDashboard(options = {}) {
+            await loadCalendarIndex();
+            loadDailyTaskForCurrentDate();
+            return loadDashboardData(options);
+        }
+
         function changeYearMonth() {
             const yearSelect = document.getElementById('yearSelect');
             const monthSelect = document.getElementById('monthSelect');
@@ -2497,21 +2821,28 @@
             const maxDay = new Date(year, month, 0).getDate();
             currentDate = new Date(year, month - 1, Math.min(day, maxDay));
             updateDateDisplay();
-            loadDailyTaskForCurrentDate();
-            loadDashboardData();
+            refreshCalendarAndDashboard();
         }
 
         function selectCalendarDate(dateKey) {
             const availableDates = getCalendarDateSet();
             if (!availableDates.has(dateKey)) return;
+            currentAnimatingCalendarDateKey = dateKey;
+            if (calendarTapAnimationTimer) {
+                clearTimeout(calendarTapAnimationTimer);
+            }
+            calendarTapAnimationTimer = setTimeout(() => {
+                currentAnimatingCalendarDateKey = '';
+                renderMonthCalendar();
+            }, 190);
             currentDate = parseDateKey(dateKey);
             updateDateDisplay();
-            loadDailyTaskForCurrentDate();
-            loadDashboardData();
+            refreshCalendarAndDashboard();
         }
 
         function switchTab(tab) {
             currentTab = tab;
+            currentSelectedWeekPointIndex = -1;
 
             document.getElementById('dayTab').className = 'tab-btn' + (tab === 'day' ? ' active' : '');
             document.getElementById('weekTab').className = 'tab-btn' + (tab === 'week' ? ' active' : '');
@@ -2522,29 +2853,32 @@
 
             currentRangeLabel = null;
             updateDateDisplay();
-            loadDailyTaskForCurrentDate();
-            loadDashboardData();
+            refreshCalendarAndDashboard();
         }
 
         function showStatsPage() {
             document.getElementById('mainPage').style.left = '210px';
             document.getElementById('statsPage').style.left = '0px';
-            loadDashboardData();
+            syncPageTransitionState();
+            refreshCalendarAndDashboard();
         }
 
         function hideStatsPage() {
             document.getElementById('mainPage').style.left = '0px';
             document.getElementById('statsPage').style.left = '-210px';
+            syncPageTransitionState();
         }
 
         function showPiePage() {
             document.getElementById('statsPage').style.left = '-210px';
             document.getElementById('piePage').style.left = '0px';
+            syncPageTransitionState();
         }
 
         function hidePiePage() {
             document.getElementById('statsPage').style.left = '0px';
             document.getElementById('piePage').style.left = '210px';
+            syncPageTransitionState();
         }
 
         function quitApp() {
