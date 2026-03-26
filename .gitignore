@@ -30,3 +30,4 @@ data/*.db
 # Electron build artifacts
 electron-dist/electron-dist/
 electron-dist/node_modules/
+.env
