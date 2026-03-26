@@ -2,7 +2,7 @@
 import hashlib
 import json
 import os
-
+from dotenv import load_dotenv
 import requests
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +13,6 @@ import uuid
 import logging
 from pathlib import Path
 from statistics import mean, median
-
 from .database import (
     init_db,
     create_session,
@@ -33,10 +32,16 @@ from analysis.learning_analysis import LearningAnalysis
 from analysis.recommendation_engine import RecommendationEngine
 from analysis.report_generator import ReportGenerator
 
+load_dotenv()
+
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+api_key = os.getenv("ARK_API_KEY", os.getenv("DOUBAO_API_KEY", "")).strip()
+if not api_key:
+    logger.warning("ARK_API_KEY / DOUBAO_API_KEY 未配置，AI 功能将不可用")
 
 app = FastAPI(
     title="Focus Backend",

@@ -2,16 +2,18 @@ const { app, BrowserWindow, Tray, Menu, nativeImage, screen, ipcMain } = require
 
 let mainWindow = null;
 let tray = null;
+const WINDOW_WIDTH = 273;
+const WINDOW_HEIGHT = 390;
 
 function createWindow() {
     const primaryDisplay = screen.getPrimaryDisplay();
     const { width, height } = primaryDisplay.workAreaSize;
 
     mainWindow = new BrowserWindow({
-        width: 210,
-        height: 300,
-        x: width - 230,
-        y: (height - 300) / 2,
+        width: WINDOW_WIDTH,
+        height: WINDOW_HEIGHT,
+        x: width - WINDOW_WIDTH - 20,
+        y: Math.round((height - WINDOW_HEIGHT) / 2),
         frame: false,
         titleBarStyle: 'hidden',
         titleBarOverlay: false,
@@ -30,7 +32,16 @@ function createWindow() {
         }
     });
 
-    mainWindow.loadFile('./index.html');
+    const apiBase = (process.env.FOCUS_API_BASE || '').trim();
+    if (apiBase) {
+        mainWindow.loadFile('./index.html', {
+            query: {
+                api_base: apiBase
+            }
+        });
+    } else {
+        mainWindow.loadFile('./index.html');
+    }
     //mainWindow.setBackgroundMaterial('acrylic');
     mainWindow.setAutoHideMenuBar(true); // 自动隐藏菜单
     mainWindow.setMenuBarVisibility(false); // 禁用菜单栏

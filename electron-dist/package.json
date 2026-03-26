@@ -1,12 +1,50 @@
 {
-  "name": "pomodoro-timer",
+  "name": "focus-app",
   "version": "1.0.0",
-  "description": "番茄钟桌面插件",
+  "description": "Focus 专注与学习分析桌面应用",
   "main": "main.js",
+  "productName": "Focus",
+  "author": "AsterLane",
+  "license": "MIT",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "electron .",
+    "pack:mac": "electron-builder --mac dmg zip",
+    "pack:win": "electron-builder --win portable zip",
+    "pack:dir": "electron-builder --dir"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "build": {
+    "appId": "com.asterlane.focus",
+    "productName": "Focus",
+    "files": [
+      "index.html",
+      "logo-login.svg",
+      "main.js",
+      "build/**/*"
+    ],
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "asar": true,
+    "artifactName": "Focus-${version}-${os}-${arch}.${ext}",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "portable",
+        "zip"
+      ]
+    }
+  },
+  "devDependencies": {
+    "electron": "^37.1.0",
+    "electron-builder": "^26.0.12"
+  }
 }
