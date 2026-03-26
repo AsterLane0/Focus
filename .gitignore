@@ -31,3 +31,6 @@ data/*.db
 electron-dist/electron-dist/
 electron-dist/node_modules/
 .env
+!electron-dist/build/
+!electron-dist/build/**
+
