@@ -21,6 +21,12 @@
       "main.js",
       "build/**/*"
     ],
+    "extraFiles": [
+      {
+        "from": "focus.config.json",
+        "to": "focus.config.json"
+      }
+    ],
     "directories": {
       "buildResources": "build",
       "output": "dist"

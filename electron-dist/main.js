@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const { app, BrowserWindow, Tray, Menu, nativeImage, screen, ipcMain } = require('electron');
 
 let mainWindow = null;
@@ -6,6 +7,39 @@ let tray = null;
 const WINDOW_WIDTH = 273;
 const WINDOW_HEIGHT = 390;
 const APP_ID = 'com.asterlane.focus';
+
+function getConfigSearchPaths() {
+    const candidates = [];
+
+    if (app.isPackaged) {
+        candidates.push(path.join(path.dirname(process.execPath), 'focus.config.json'));
+        candidates.push(path.join(process.resourcesPath, 'focus.config.json'));
+    }
+
+    candidates.push(path.join(__dirname, 'focus.config.json'));
+    return candidates;
+}
+
+function readExternalApiBase() {
+    for (const configPath of getConfigSearchPaths()) {
+        try {
+            if (!fs.existsSync(configPath)) {
+                continue;
+            }
+
+            const raw = fs.readFileSync(configPath, 'utf8');
+            const parsed = JSON.parse(raw);
+            const apiBase = String(parsed.apiBase || '').trim();
+            if (apiBase) {
+                return apiBase;
+            }
+        } catch (error) {
+            console.warn(`Failed to read config from ${configPath}:`, error);
+        }
+    }
+
+    return '';
+}
 
 function getAppIconPath() {
     return process.platform === 'win32'
@@ -41,7 +75,10 @@ function createWindow() {
         }
     });
 
-    const apiBase = (process.env.FOCUS_API_BASE || '').trim();
+    const apiBase = (
+        process.env.FOCUS_API_BASE ||
+        readExternalApiBase()
+    ).trim();
     if (apiBase) {
         mainWindow.loadFile('./index.html', {
             query: {
