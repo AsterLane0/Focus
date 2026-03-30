@@ -1,243 +1,233 @@
 # Focus
 
-Focus 是一个面向学习场景的专注度分析桌面应用。项目把 HRV 数据分析、学习状态判断、AI 文本总结和 Electron 桌面端整合在一起，方便在比赛展示时以“可运行产品”的形式呈现。
+Focus 是一个面向学习场景的桌面应用，围绕 HRV 数据分析、专注度评估、FastAPI 后端和 Electron 客户端构建。它既可以本地运行，也支持通过 Cloudflare Tunnel 临时暴露到公网，方便跨设备演示和联调。
 
-## 项目目标
+## 项目简介
 
-- 基于 HRV 数据估计学习过程中的压力与专注度变化
-- 以日 / 周两个粒度展示学习状态
-- 输出结构化建议与 AI 学习分析
-- 通过 Electron 提供桌面端交互界面
+这个项目主要包含以下能力：
+
+- 读取并处理 HRV 数据
+- 评估压力与专注度变化
+- 提供日报、周报等分析接口
+- 支持可选的 AI 文本总结
+- 提供 Electron 桌面端界面
+
+## 项目亮点
+
+- FastAPI 后端，自带 Swagger 文档页面
+- Electron 桌面应用，支持外部 API 地址配置
+- SQLite 持久化学习会话与用户偏好
+- `data/` 目录保留本地原始数据和运行产物
+- 支持通过 Cloudflare Quick Tunnel 快速对外访问
 
 ## 项目结构
 
 ```text
 Focus/
-├─ main.py                    # 本地串联演示入口
-├─ requirements.txt           # Python 依赖
-├─ src/
-│  └─ data_loader.py          # 数据读取与预处理
-├─ analysis/
-│  ├─ focus_model.py          # HRV -> 压力 / 专注度模型
-│  ├─ learning_analysis.py    # 日 / 周学习分析逻辑
-│  ├─ recommendation_engine.py# 状态判断与建议生成
-│  └─ report_generator.py     # 报告结构整理
-├─ backend/
-│  ├─ api_server.py           # FastAPI 后端
-│  ├─ database.py             # SQLite 持久化
-│  └─ __init__.py
-├─ data/
-│  ├─ raw/                    # 原始样例数据
-│  └─ processed/              # 运行生成数据
-├─ docs/
-│  └─ PROJECT_STRUCTURE.md    # 结构说明文档
-├─ electron-dist/
-│  ├─ index.html              # Electron 前端页面
-│  ├─ main.js                 # Electron 主进程
-│  ├─ package.json            # Electron 打包配置
-│  ├─ build/                  # 图标与构建资源
-│  └─ 启动.bat                # Windows 启动脚本
-└─ .gitignore
+|-- analysis/                # 专注度与学习分析逻辑
+|-- backend/                 # FastAPI 应用、数据库访问、服务入口
+|-- data/                    # 本地数据与运行生成文件
+|-- electron-dist/           # Electron 应用与打包配置
+|-- src/                     # 数据加载与辅助工具
+|-- main.py                  # 本地演示入口
+|-- requirements.txt         # Python 依赖
+`-- README.md
 ```
 
 ## 技术栈
 
 - Python
 - FastAPI
+- Uvicorn
 - SQLite
 - Pandas
 - Electron
 - Electron Builder
-- 火山引擎 ARK（AI 分析）
 
 ## 环境要求
 
 ### Python
 
-- 建议 `Python 3.11+`
+- 建议使用 Python 3.10 及以上版本
+- 推荐使用项目本地虚拟环境 `.venv`
 
 ### Node.js
 
-- 建议 `Node.js 20.x`
-- 不建议使用过新的 Node 版本直接打包 Electron
+- 建议使用 Node.js 20.x
 
-### AI 配置
+### 可选 AI 配置
 
-如果需要启用 AI 学习分析，请准备：
+如果需要启用 AI 总结能力，请提供：
 
 - `ARK_API_KEY`
-- ARK 控制台中的模型接入点 ID，例如 `ep-xxxxxxxxxxxxxxxx`
+- `DOUBAO_MODEL`
 
-`DOUBAO_MODEL` 这里应填写 ARK 的接入点 ID，不是 `Doubao-pro-32k` 这种旧模型名
+说明：`DOUBAO_MODEL` 应填写 ARK 接入点 ID，而不是旧的模型别名。
 
 ## 安装依赖
 
+### Python 依赖
+
 在项目根目录执行：
 
-```bash
-pip install -r requirements.txt
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-Electron 依赖在 `electron-dist/` 下单独安装：
+如果项目里已经有 `.venv`，可以直接安装：
 
-```bash
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+### Electron 依赖
+
+在 `electron-dist/` 目录执行：
+
+```powershell
 cd electron-dist
 npm install
 ```
 
-如果安装 Electron 依赖时遇到证书问题，可临时使用：
-
-```bash
-NODE_TLS_REJECT_UNAUTHORIZED=0 npm install --no-audit
-```
-
-这只建议用于本地开发 / 比赛打包环境，不建议长期作为默认方案。
-
 ## 本地运行
 
-### 1. 运行本地分析入口
-
-```bash
-python main.py
-```
-
-### 2. 启动后端 API
+### 1. 启动 FastAPI 后端
 
 在项目根目录执行：
 
-```bash
-export ARK_API_KEY='你的ARK密钥'
-export DOUBAO_MODEL='你的ARK接入点ID'
-uvicorn backend.api_server:app --host 127.0.0.1 --port 8000
+```powershell
+$env:FOCUS_HOST="0.0.0.0"
+$env:FOCUS_PORT="8000"
+.\.venv\Scripts\python.exe -m uvicorn backend.api_server:app --host 0.0.0.0 --port 8000
 ```
 
-如果暂时不接 AI，也可以直接启动后端，但 AI 相关内容会退回本地摘要或不可用。
+预期结果：
 
-### 3. 启动 Electron 桌面端
+- Uvicorn 正常启动
+- 浏览器可以打开 [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
-```bash
+也可以使用项目内的启动入口：
+
+```powershell
+.\.venv\Scripts\python.exe -m backend.run_server
+```
+
+### 2. 启动 Electron 桌面端
+
+```powershell
 cd electron-dist
 npm start
 ```
 
-## 常用接口
+## 常用本地接口
 
-后端启动后，可通过以下地址验证服务状态：
+后端启动后，可以先用这些地址验证服务状态：
 
-- `http://127.0.0.1:8000/users`
-- `http://127.0.0.1:8000/calendar_index?user_id=P1`
-- `http://127.0.0.1:8000/docs`
+- [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- [http://127.0.0.1:8000/users](http://127.0.0.1:8000/users)
+- [http://127.0.0.1:8000/calendar_index?user_id=P1](http://127.0.0.1:8000/calendar_index?user_id=P1)
 
 说明：
 
-- 根路径 `/` 返回 `{"detail":"Not Found"}` 是正常现象
-- 这是 API 服务，不是后端网页首页
+- `GET /` 返回 `{"detail":"Not Found"}` 属于正常现象
+- 这是 API 服务，不是传统网页首页
 
-## AI 功能说明
+## 通过 Cloudflare Quick Tunnel 暴露公网
 
-AI 分析并不是页面一打开就自动生成，而是通过“生成每日报告”触发。
+这个项目可以在 Windows 电脑上直接暴露到公网，不需要云服务器，也不需要自定义域名。
 
-触发条件：
+### 这意味着什么
 
-1. 当前日期有可用学习数据
-2. 已填写“今日任务”
-3. 后端已正确读取 `ARK_API_KEY` 和接入点 ID
+- FastAPI 后端仍然运行在你的 Windows 电脑上
+- `cloudflared` 会创建一个临时公网地址
+- 其他设备可以通过这个公网地址访问你的后端
+- `data/` 目录中的文件依然保存在这台 Windows 电脑上
+- 远程设备只能通过 API 间接读取数据，不能直接访问本地磁盘
 
-如果 AI 没有生成成功，后端可能会：
+### Windows 快速步骤
 
-- 输出日志警告
-- 回退到本地文本分析
+1. 启动本地后端，监听 `8000` 端口
+2. 下载 `cloudflared.exe`
+3. 执行：
 
-因此排查 AI 问题时，优先检查：
+```powershell
+C:\Cloudflared\bin\cloudflared.exe tunnel --url http://127.0.0.1:8000
+```
 
-- 后端启动终端日志
-- `DOUBAO_MODEL` 是否为 ARK 接入点 ID
-- 网络 / 证书环境是否正常
+4. 打开生成的 `https://xxxx.trycloudflare.com/docs`
+
+注意：
+
+- FastAPI 的终端窗口要保持开启
+- `cloudflared` 的终端窗口也要保持开启
+- Quick Tunnel 生成的公网地址是临时的，后续可能变化
+
+## Electron 后端地址配置
+
+Electron 支持通过以下方式配置后端 API 地址：
+
+- 环境变量 `FOCUS_API_BASE`
+- 外部配置文件 `focus.config.json`
+
+配置示例：
+
+```json
+{
+  "apiBase": "https://xxxx.trycloudflare.com"
+}
+```
+
+打包后，`focus.config.json` 可以和可执行文件放在一起，用来覆盖默认的本地 API 地址。
 
 ## Electron 打包
 
-打包命令都在 `electron-dist/package.json` 中定义。
+在 `electron-dist/` 目录执行：
 
-### macOS
-
-先生成目录版：
-
-```bash
-cd electron-dist
-npm run pack:dir
-```
-
-再生成安装包：
-
-```bash
-npm run pack:mac
-```
-
-### Windows
-
-推荐在 Windows 机器上执行：
-
-```bash
-cd electron-dist
-npm install
+```powershell
 npm run pack:win
 ```
 
-### 打包产物位置
+当前 Windows 打包注意事项：
 
-默认输出到：
+- `electron-builder` 可能会在下载或解压 `winCodeSign` 时失败
+- 即使失败，`dist/win-unpacked/` 也可能已经生成，可以先用于测试
 
-```text
-electron-dist/dist/
-```
+### 测试打包产物
 
-## 图标资源
+如果没有成功生成最终安装包，但已经生成 `win-unpacked`，可以先测试：
 
-Electron 使用 `electron-dist/build/` 下的图标资源：
+- `electron-dist/dist/win-unpacked/Focus.exe`
 
-- `icon.png`
-- `icon.ico`
-- `icon.icns`
+如果要把测试版给另一台 Windows 电脑使用：
 
-如果替换 logo 后需要重新生成图标，请同步更新这些文件再重新打包。
+- 发送整个 `electron-dist/dist/win-unpacked/` 目录，而不是只发 `Focus.exe`
+- `focus.config.json` 需要和可执行文件放在同一目录
+- 作为后端宿主机的 Windows 电脑必须保持 FastAPI 和 Cloudflare Tunnel 运行中
 
-## 协作建议
+## 数据存储说明
 
-建议按三人分工维护：
+`data/` 目录始终保存在宿主机本地。
 
-- 前端：`electron-dist/`
-- 后端：`backend/`
-- 模型与分析：`analysis/`、`src/`
+这意味着：
 
-协作原则：
+- 数据不会直接同步到客户端设备
+- 远程用户不能直接浏览宿主机磁盘
+- 后端只是在本机读取文件，然后把结果通过 API 返回给客户端
 
-- 算法逻辑不要混入 `backend/`
-- 接口与数据库只放 `backend/`
-- 页面与打包配置统一放 `electron-dist/`
-- 原始数据放 `data/raw/`
-- 运行产物放 `data/processed/`
-- 文档统一收口到 `docs/`
+## 开发建议
 
-## 提交前检查
+- 后端接口与数据库逻辑放在 `backend/`
+- 分析与建模逻辑放在 `analysis/` 和 `src/`
+- Electron 页面与打包配置放在 `electron-dist/`
+- `data/` 目录视为本地运行数据目录
 
-建议每次提交前至少确认：
+## 提交前建议检查
 
-1. `python main.py` 能跑通
-2. 后端 `uvicorn backend.api_server:app --host 127.0.0.1 --port 8000` 能启动
-3. Electron 页面能正常打开
-4. 关键页面布局没有明显错位
-5. 若涉及 AI，确认后端日志没有明显报错
+在推送到 GitHub 前，建议至少确认：
 
-## 当前已完成事项
-
-- 项目目录已按“算法 / 后端 / 数据 / 前端打包”整理
-- Electron 主界面、统计页、详情页完成一轮 UI 调整
-- macOS 目录版打包链路已跑通
-- AI 配置方式已切换到火山引擎 ARK 接入点思路
-
-## 后续建议
-
-- 在 Windows 机器上完成一次正式 `pack:win`
-- 将 ARK 接入点 ID 与启动方式写入团队内部说明
-- 如需长期稳定打包，建议统一 Node 版本与网络环境
-- 如需正式分发 mac 应用，可进一步补充签名与 notarization
+1. 后端可以正常启动
+2. `/docs` 可以本地打开
+3. Electron 可以正常启动
+4. 关键页面没有明显布局或数据错误
+5. 即使没有 AI Key，项目也不会因相关功能而启动失败
