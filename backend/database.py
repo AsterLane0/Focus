@@ -8,7 +8,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DB_PATH = BASE_DIR / "data" / "study_sessions.db"
+
+
+def resolve_db_path() -> Path:
+    custom_db_path = os.getenv("FOCUS_DB_PATH", "").strip()
+    if custom_db_path:
+        return Path(custom_db_path).expanduser().resolve()
+    return BASE_DIR / "data" / "study_sessions.db"
+
+
+DB_PATH = resolve_db_path()
 
 
 def init_db() -> None:

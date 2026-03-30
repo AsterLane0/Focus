@@ -1,4 +1,4 @@
-# Focus
+﻿# Focus
 
 Focus 是一个面向学习场景的桌面应用，围绕 HRV 数据分析、专注度评估、FastAPI 后端和 Electron 客户端构建。它既可以本地运行，也支持通过 Cloudflare Tunnel 临时暴露到公网，方便跨设备演示和联调。
 
