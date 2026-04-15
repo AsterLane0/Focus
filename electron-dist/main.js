@@ -7,6 +7,7 @@ let tray = null;
 const WINDOW_WIDTH = 273;
 const WINDOW_HEIGHT = 390;
 const APP_ID = 'com.asterlane.focus';
+const DEFAULT_API_BASE = 'http://120.77.145.202:9000';
 
 function getConfigSearchPaths() {
     const candidates = [];
@@ -77,17 +78,14 @@ function createWindow() {
 
     const apiBase = (
         process.env.FOCUS_API_BASE ||
-        readExternalApiBase()
+        readExternalApiBase() ||
+        DEFAULT_API_BASE
     ).trim();
-    if (apiBase) {
-        mainWindow.loadFile('./index.html', {
-            query: {
-                api_base: apiBase
-            }
-        });
-    } else {
-        mainWindow.loadFile('./index.html');
-    }
+    mainWindow.loadFile('./index.html', {
+        query: {
+            api_base: apiBase
+        }
+    });
     //mainWindow.setBackgroundMaterial('acrylic');
     mainWindow.setAutoHideMenuBar(true); // 自动隐藏菜单
     mainWindow.setMenuBarVisibility(false); // 禁用菜单栏
