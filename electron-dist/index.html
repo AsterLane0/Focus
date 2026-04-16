@@ -1613,7 +1613,7 @@
                 <div class="page-inner">
                     <div class="login-content">
                         <div class="login-mark">
-                            <img src="./logo.svg" alt="Focus logo">
+                            <img src="./logo-login.svg" alt="Focus logo">
                         </div>
                         <div class="login-card">
                             <div class="login-select-wrap">
@@ -3280,7 +3280,7 @@
             clearInterval(timerInterval);
             timerInterval = null;
             isRunning = false;
-            applyPhase('focus');
+            applyPhase(currentPhase);
             showStartButton();
             updateStatusText();
         }
