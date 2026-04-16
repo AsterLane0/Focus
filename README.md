@@ -1,217 +1,502 @@
-﻿# Focus
+# Focus
 
-Focus 是一个面向学习场景的桌面应用，围绕 HRV 数据分析、专注度评估、FastAPI 后端和 Electron 客户端构建。它既可以本地运行，也支持通过 Cloudflare Tunnel 临时暴露到公网，方便跨设备演示和联调。
+Focus 是一个面向学习场景的桌面应用项目，包含：
 
-## 项目简介
+- 基于 HRV 数据的专注度与压力分析
+- FastAPI 后端接口
+- Electron 桌面端前端
+- 可选的 AI 分析与日报生成功能
 
-这个项目主要包含以下能力：
+这个 README 重点解决三件事：
 
-- 读取并处理 HRV 数据
-- 评估压力与专注度变化
-- 提供日报、周报等分析接口
-- 支持可选的 AI 文本总结
-- 提供 Electron 桌面端界面
+1. 让新机器能把项目跑起来
+2. 让阅读者快速理解项目结构和运行方式
+3. 让部署到云服务器和打包给用户这两件事有清晰说明
 
-## 项目亮点
+## 目录
 
-- FastAPI 后端，自带 Swagger 文档页面
-- Electron 桌面应用，支持外部 API 地址配置
-- SQLite 持久化学习会话与用户偏好
-- `data/` 目录保留本地原始数据和运行产物
-- 支持通过 Cloudflare Quick Tunnel 快速对外访问
+- [项目结构](#项目结构)
+- [技术栈](#技术栈)
+- [运行前准备](#运行前准备)
+- [环境变量](#环境变量)
+- [本地开发启动](#本地开发启动)
+- [桌面端连接云服务器后端](#桌面端连接云服务器后端)
+- [云服务器部署](#云服务器部署)
+- [接口与数据说明](#接口与数据说明)
+- [AI 功能说明](#ai-功能说明)
+- [打包与交付](#打包与交付)
+- [常用命令](#常用命令)
+- [常见问题排查](#常见问题排查)
 
 ## 项目结构
 
 ```text
 Focus/
-|-- analysis/                # 专注度与学习分析逻辑
-|-- backend/                 # FastAPI 应用、数据库访问、服务入口
-|-- data/                    # 本地数据与运行生成文件
-|-- electron-dist/           # Electron 应用与打包配置
-|-- src/                     # 数据加载与辅助工具
-|-- main.py                  # 本地演示入口
-|-- requirements.txt         # Python 依赖
-`-- README.md
+├─ analysis/                  # 专注度、学习状态、建议和报告生成逻辑
+├─ backend/                   # FastAPI 服务、数据库访问、启动入口
+├─ data/                      # 原始数据、SQLite 数据库、运行期产物
+├─ electron-dist/             # Electron 桌面端源码与打包配置
+├─ src/                       # 数据加载与辅助工具
+├─ main.py                    # 本地演示入口
+├─ requirements.txt           # Python 依赖
+├─ start-focus.bat            # Windows 下启动桌面端的快捷入口
+└─ README.md
 ```
+
+### 目录职责
+
+- `analysis/`
+  负责专注度分析、学习行为分析、建议生成、AI 报告组织。
+
+- `backend/`
+  提供 FastAPI 接口，对外暴露 `/users`、`/daily_dashboard`、`/calendar_index`、`/user_ai_preference`、`/user_daily_task` 等接口。
+
+- `data/`
+  保存项目运行所依赖和生成的数据。数据库也会落在这里，例如学习会话记录数据库。
+
+- `electron-dist/`
+  是当前桌面端前端的真实运行目录。桌面端不是传统 Web 项目的 `src + Vite` 架构，而是 Electron 加静态 HTML/JS 页面。
 
 ## 技术栈
 
-- Python
-- FastAPI
-- Uvicorn
-- SQLite
-- Pandas
-- Electron
-- Electron Builder
+- **语言**：Python 3、JavaScript
+- **后端框架**：FastAPI
+- **后端服务**：Uvicorn
+- **数据处理**：Pandas
+- **数据存储**：SQLite
+- **桌面端**：Electron
+- **打包工具**：electron-builder
+- **AI 接入**：ARK / 豆包接入点
 
-## 环境要求
+## 运行前准备
 
-### Python
+### 本地开发环境
 
-- 建议使用 Python 3.10 及以上版本
-- 推荐使用项目本地虚拟环境 `.venv`
+- Python 3.10 及以上
+- Node.js 20.x
+- npm（随 Node.js 一起安装即可）
 
-### Node.js
+### 云服务器部署环境
 
-- 建议使用 Node.js 20.x
+- Ubuntu 22.04 或其他兼容 Linux 环境
+- Python 3.10 及以上
+- 可正常对外开放后端端口
 
-### 可选 AI 配置
+## 环境变量
 
-如果需要启用 AI 总结能力，请提供：
+项目后端启动时会自动读取 `.env` 文件。
 
-- `ARK_API_KEY`
-- `DOUBAO_MODEL`
+### 必填
 
-说明：`DOUBAO_MODEL` 应填写 ARK 接入点 ID，而不是旧的模型别名。
+| 变量名 | 说明 |
+| --- | --- |
+| `ARK_API_KEY` | AI 接口访问 key |
+| `DOUBAO_MODEL` | 豆包 / ARK 接入点 ID |
 
-## 安装依赖
+### 兼容变量
 
-### Python 依赖
+| 变量名 | 说明 |
+| --- | --- |
+| `DOUBAO_API_KEY` | 兼容写法，代码会在找不到 `ARK_API_KEY` 时继续尝试读取它 |
 
-在项目根目录执行：
+### 后端启动相关
+
+| 变量名 | 说明 | 默认值 |
+| --- | --- | --- |
+| `FOCUS_HOST` | 后端监听地址 | `0.0.0.0` |
+| `FOCUS_PORT` | 后端监听端口 | `8000` |
+
+### `.env` 示例
+
+```env
+ARK_API_KEY=your_api_key_here
+DOUBAO_MODEL=your_endpoint_id_here
+```
+
+说明：
+
+- `.env` 只应该保留在本地电脑或云服务器上
+- 不要把真实 key 提交到 GitHub
+- `DOUBAO_MODEL` 应填写接入点 ID，而不是旧模型别名
+
+## 本地开发启动
+
+### 1. 克隆项目
+
+```bash
+git clone <your-repo-url>
+cd Focus
+```
+
+### 2. 安装 Python 依赖
+
+Windows：
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-如果项目里已经有 `.venv`，可以直接安装：
+Linux / macOS：
 
-```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-### Electron 依赖
+### 3. 安装 Electron 依赖
 
-在 `electron-dist/` 目录执行：
-
-```powershell
+```bash
 cd electron-dist
 npm install
+cd ..
 ```
 
-## 本地运行
+### 4. 配置 AI（可选）
 
-### 1. 启动 FastAPI 后端
+如果只联调基础接口，不需要 AI，可跳过。
 
-在项目根目录执行：
+如果要启用 AI 分析，请在项目根目录创建 `.env`：
+
+```env
+ARK_API_KEY=your_api_key_here
+DOUBAO_MODEL=your_endpoint_id_here
+```
+
+### 5. 启动本地后端
+
+方式一：直接运行 Uvicorn
+
+Windows：
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn backend.api_server:app --host 0.0.0.0 --port 8000
+```
+
+Linux / macOS：
+
+```bash
+source .venv/bin/activate
+uvicorn backend.api_server:app --host 0.0.0.0 --port 8000
+```
+
+方式二：使用项目封装入口
+
+Windows：
 
 ```powershell
 $env:FOCUS_HOST="0.0.0.0"
 $env:FOCUS_PORT="8000"
-.\.venv\Scripts\python.exe -m uvicorn backend.api_server:app --host 0.0.0.0 --port 8000
-```
-
-预期结果：
-
-- Uvicorn 正常启动
-- 浏览器可以打开 [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-
-也可以使用项目内的启动入口：
-
-```powershell
 .\.venv\Scripts\python.exe -m backend.run_server
 ```
 
-### 2. 启动 Electron 桌面端
+Linux / macOS：
 
-```powershell
+```bash
+export FOCUS_HOST=0.0.0.0
+export FOCUS_PORT=8000
+python -m backend.run_server
+```
+
+### 6. 启动桌面端
+
+```bash
 cd electron-dist
 npm start
 ```
 
-## 常用本地接口
+启动后，桌面端会打开 Electron 窗口。
 
-后端启动后，可以先用这些地址验证服务状态：
+### 7. 验证本地后端是否正常
+
+先在浏览器中访问：
 
 - [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 - [http://127.0.0.1:8000/users](http://127.0.0.1:8000/users)
-- [http://127.0.0.1:8000/calendar_index?user_id=P1](http://127.0.0.1:8000/calendar_index?user_id=P1)
+
+如果这两个地址正常返回，说明本地后端已启动成功。
+
+## 桌面端连接云服务器后端
+
+当前项目已经支持“本地电脑运行桌面端，云服务器运行后端”的联调方式。
+
+### 当前桌面端后端地址机制
+
+桌面端后端地址优先级如下：
+
+1. 启动参数传入的 `api_base`
+2. 本地保存的 `focus_api_base`
+3. Electron 主进程中的默认地址
+
+### Windows 快捷启动方式
+
+项目根目录提供了：
+
+```text
+start-focus.bat
+```
+
+这个脚本当前行为是：
+
+- 不启动本地 FastAPI
+- 只启动 Electron 桌面端
+- 启动时将 `FOCUS_API_BASE` 传给桌面端
+
+如果你当前联调目标是云服务器后端，可以直接双击这个文件。
+
+### 云服务器联调时的验证方法
+
+桌面端打开后，至少检查这几个点：
+
+- 登录页是否能正常拉出用户列表
+- 进入主界面后是否能读取日报、任务、偏好等数据
+- 浏览器是否能访问云服务器 Swagger 文档
+
+例如当前常见验证地址为：
+
+```text
+http://<server-ip>:9000/docs
+http://<server-ip>:9000/users
+```
+
+## 云服务器部署
+
+### 1. 上传或拉取项目
+
+```bash
+git clone <your-repo-url>
+cd Focus
+```
+
+### 2. 创建虚拟环境并安装依赖
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 3. 配置 `.env`
+
+```bash
+cat > .env <<'EOF'
+ARK_API_KEY=your_api_key_here
+DOUBAO_MODEL=your_endpoint_id_here
+EOF
+```
+
+### 4. 启动后端
+
+开发联调方式：
+
+```bash
+source .venv/bin/activate
+uvicorn backend.api_server:app --host 0.0.0.0 --port 9000 --reload
+```
+
+更稳定的方式：
+
+```bash
+source .venv/bin/activate
+uvicorn backend.api_server:app --host 0.0.0.0 --port 9000
+```
 
 说明：
 
-- `GET /` 返回 `{"detail":"Not Found"}` 属于正常现象
-- 这是 API 服务，不是传统网页首页
+- `0.0.0.0` 代表监听所有网卡
+- 外部设备访问时，不是访问 `0.0.0.0`
+- 外部访问应使用服务器公网 IP，例如 `http://<server-ip>:9000`
 
-## 通过 Cloudflare Quick Tunnel 暴露公网
+### 5. 服务器自检
 
-这个项目可以在 Windows 电脑上直接暴露到公网，不需要云服务器，也不需要自定义域名。
+在服务器上检查 9000 端口是否在监听：
 
-### 这意味着什么
-
-- FastAPI 后端仍然运行在你的 Windows 电脑上
-- `cloudflared` 会创建一个临时公网地址
-- 其他设备可以通过这个公网地址访问你的后端
-- `data/` 目录中的文件依然保存在这台 Windows 电脑上
-- 远程设备只能通过 API 间接读取数据，不能直接访问本地磁盘
-
-### Windows 快速步骤
-
-1. 启动本地后端，监听 `8000` 端口
-2. 下载 `cloudflared.exe`
-3. 执行：
-
-```powershell
-C:\Cloudflared\bin\cloudflared.exe tunnel --url http://127.0.0.1:8000
+```bash
+ss -ltnp | grep 9000
 ```
 
-4. 打开生成的 `https://xxxx.trycloudflare.com/docs`
+在服务器本机测试：
 
-注意：
-
-- FastAPI 的终端窗口要保持开启
-- `cloudflared` 的终端窗口也要保持开启
-- Quick Tunnel 生成的公网地址是临时的，后续可能变化
-
-## Electron 后端地址配置
-
-Electron 支持通过以下方式配置后端 API 地址：
-
-- 环境变量 `FOCUS_API_BASE`
-- 外部配置文件 `focus.config.json`
-
-配置示例：
-
-```json
-{
-  "apiBase": "https://xxxx.trycloudflare.com"
-}
+```bash
+curl http://127.0.0.1:9000/docs
+curl http://127.0.0.1:9000/users
 ```
 
-打包后，`focus.config.json` 可以和可执行文件放在一起，用来覆盖默认的本地 API 地址。
+### 6. 客户端验证
 
-## Electron 打包
+在你自己的电脑上访问：
+
+```text
+http://<server-ip>:9000/docs
+http://<server-ip>:9000/users
+```
+
+如果这两个地址能打开，说明云服务器后端已对外可用。
+
+## 接口与数据说明
+
+### 常用接口
+
+| 接口 | 作用 |
+| --- | --- |
+| `/docs` | Swagger 文档页 |
+| `/openapi.json` | OpenAPI 描述 |
+| `/users` | 获取用户列表 |
+| `/calendar_index` | 获取用户日历数据索引 |
+| `/daily_dashboard` | 获取日 / 周分析数据 |
+| `/user_ai_preference` | 获取或保存用户 AI 偏好 |
+| `/user_daily_task` | 获取或保存用户当日任务 |
+
+### 数据存储
+
+项目运行数据主要位于：
+
+- `data/raw/`：原始 HRV 数据
+- `data/processed/`：处理产物
+- `data/*.db`：SQLite 数据库
+
+后端数据库初始化日志中通常会出现类似：
+
+```text
+Database initialized at /path/to/Focus/data/study_sessions.db
+```
+
+这表示 SQLite 数据库已经建立。
+
+## AI 功能说明
+
+### AI 功能依赖
+
+如果未配置 `ARK_API_KEY` 或 `DOUBAO_API_KEY`，后端会启动，但 AI 功能不可用。
+
+也就是说：
+
+- 基础接口仍然可用
+- 登录、用户列表、日报基础数据仍可工作
+- 只有 AI 分析 / AI 报告会失效
+
+### 如何判断 AI 已生效
+
+后端启动后如果不再出现这句警告，通常说明 key 已被正确读取：
+
+```text
+ARK_API_KEY / DOUBAO_API_KEY 未配置，AI 功能将不可用
+```
+
+然后再去前端实际触发一次 AI 分析或报告生成，确认结果能返回。
+
+## 打包与交付
+
+### Windows 打包
 
 在 `electron-dist/` 目录执行：
 
-```powershell
+```bash
 npm run pack:win
 ```
 
-当前 Windows 打包注意事项：
+### macOS 打包
 
-- `electron-builder` 可能会在下载或解压 `winCodeSign` 时失败
-- 即使失败，`dist/win-unpacked/` 也可能已经生成，可以先用于测试
+```bash
+npm run pack:mac
+```
 
-### 测试打包产物
+### 只打出目录
 
-如果没有成功生成最终安装包，但已经生成 `win-unpacked`，可以先测试：
+```bash
+npm run pack:dir
+```
 
-- `electron-dist/dist/win-unpacked/Focus.exe`
+### 打包输出说明
 
-如果要把测试版给另一台 Windows 电脑使用：
+常见输出目录：
 
-- 发送整个 `electron-dist/dist/win-unpacked/` 目录，而不是只发 `Focus.exe`
-- `focus.config.json` 需要和可执行文件放在同一目录
-- 作为后端宿主机的 Windows 电脑必须保持 FastAPI 和 Cloudflare Tunnel 运行中
+```text
+electron-dist/dist/
+```
 
-## 数据存储说明
+如果生成了 `win-unpacked`，测试时应优先发送整个目录，而不是只发送单个 `.exe`。
 
-`data/` 目录始终保存在宿主机本地。
+### `focus.config.json`
 
-这意味着：
+打包配置中已经声明会把 `focus.config.json` 一起带进产物。
 
-- 数据不会直接同步到客户端设备
-- 远程用户不能直接浏览宿主机磁盘
-- 后端只是在本机读取文件，然后把结果通过 API 返回给客户端
+它的作用是给打包后的桌面端覆盖 API 地址，例如：
+
+```json
+{
+  "apiBase": "http://your-server-ip:9000"
+}
+```
+
+如果你要把软件交给用户使用，最稳的方式是：
+
+- 打包时确保后端地址明确
+- 把 `focus.config.json` 和可执行文件放在一起
+- 在另一台普通电脑上做一次完整启动验证
+
+## 常用命令
+
+| 命令 | 作用 |
+| --- | --- |
+| `python -m backend.run_server` | 按环境变量启动后端 |
+| `uvicorn backend.api_server:app --host 0.0.0.0 --port 8000` | 本地启动后端 |
+| `uvicorn backend.api_server:app --host 0.0.0.0 --port 9000 --reload` | 云服务器联调启动 |
+| `cd electron-dist && npm start` | 启动桌面端 |
+| `cd electron-dist && npm run pack:win` | 打包 Windows 版本 |
+| `ss -ltnp | grep 9000` | 查看服务器是否监听 9000 |
+| `curl http://127.0.0.1:9000/users` | 在服务器本机测试用户列表接口 |
+
+## 常见问题排查
+
+### 1. 桌面端能打开，但拿不到数据
+
+先确认：
+
+- 后端是否启动
+- `http://<server-ip>:9000/docs` 是否可打开
+- `http://<server-ip>:9000/users` 是否返回用户列表
+
+### 2. 浏览器打不开 `/docs`
+
+常见原因：
+
+- 后端进程没启动
+- 后端没监听正确端口
+- 服务器安全组 / 防火墙没开放端口
+- 服务只监听了 `127.0.0.1`，没有监听 `0.0.0.0`
+
+### 3. 桌面端登录页还能看到用户列表，但浏览器一度打不开文档页
+
+这种情况不一定表示桌面端地址错了。
+
+排查方向应优先看：
+
+- 云服务器服务是否间歇性波动
+- 程序本地缓存是否残留
+- 实际请求地址是否仍然是目标服务器地址
+
+### 4. AI 功能不可用
+
+先检查：
+
+- `.env` 是否存在
+- `ARK_API_KEY` 是否正确
+- `DOUBAO_MODEL` 是否正确
+- 启动日志里是否还在报“AI 功能将不可用”
+
+### 5. 打包后用户电脑打不开
+
+优先检查：
+
+- 是否发送了完整打包目录
+- `focus.config.json` 是否在正确位置
+- 用户电脑能否访问云服务器后端
+
+## 维护建议
+
+- 真实 API key 只保存在本地 `.env` 或服务器 `.env`
+- 不要把真实 key 写进 `.env_example`
+- 联调完成后，建议固定桌面端后端地址配置来源，减少“代码默认值”和“外部配置文件”不一致的问题
 
