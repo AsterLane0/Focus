@@ -4,7 +4,7 @@ import json
 import os
 from dotenv import load_dotenv
 import requests
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from datetime import datetime, timedelta
@@ -205,6 +205,31 @@ def list_users():
     if not daily_data:
         raise HTTPException(status_code=404, detail="No HRV data available")
     return sorted(daily_data.keys())
+
+
+@app.get("/", summary="service entry")
+def root():
+    return {
+        "service": "Focus Backend",
+        "status": "ok",
+        "docs": "/docs",
+        "health": "/health",
+    }
+
+
+@app.get("/health", summary="health check")
+def health():
+    return {"status": "ok"}
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return Response(status_code=204)
+
+
+@app.get("/metrics", include_in_schema=False)
+def metrics():
+    return {"enabled": False}
 
 @app.get("/calendar_index", summary="获取用户可用日期索引")
 def calendar_index(user_id: Optional[str] = Query(None, description="用户 ID")):
