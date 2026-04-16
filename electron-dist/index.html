@@ -2002,8 +2002,6 @@
             const params = new URLSearchParams(window.location.search || '');
             const queryApiBase = (params.get('api_base') || '').trim();
             const storedApiBase = (localStorage.getItem('focus_api_base') || '').trim();
-            const protocol = window.location.protocol;
-            const hostname = window.location.hostname;
 
             if (queryApiBase) {
                 localStorage.setItem('focus_api_base', queryApiBase);
@@ -2014,11 +2012,7 @@
                 return storedApiBase;
             }
 
-            if ((protocol === 'http:' || protocol === 'https:') && hostname) {
-                return `${protocol}//${hostname}:8000`;
-            }
-
-            return 'http://127.0.0.1:8000';
+            return 'http://120.77.145.202:9000';
         }
 
         const API_BASE = resolveApiBase();
