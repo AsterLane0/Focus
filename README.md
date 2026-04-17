@@ -413,6 +413,7 @@ npm run pack:dir
 
 1. 软件和环境
 ```text
+Capacitor： 网页转 APP 的工具
 Android Studio: D:\android-studio - 用于打开和管理 Android 项目
 Gradle: Android 构建系统（版本 8.2）
 Java: JDK（Android Studio 自带）
