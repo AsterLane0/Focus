@@ -1,56 +1,57 @@
 {
   "name": "focus-app",
-  "version": "1.0.0",
-  "description": "Focus 专注与学习分析桌面应用",
-  "main": "main.js",
   "productName": "Focus",
+  "version": "1.0.0",
+  "description": "Focus desktop app",
+  "main": "main.js",
   "author": "AsterLane",
   "license": "MIT",
   "scripts": {
-    "start": "electron .",
-    "pack:mac": "electron-builder --mac dmg zip",
-    "pack:win": "electron-builder --win portable zip",
-    "pack:dir": "electron-builder --dir"
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "make:win": "electron-forge make --platform win32",
+    "publish": "electron-forge publish"
   },
-  "build": {
-    "appId": "com.asterlane.focus",
-    "productName": "Focus",
-    "files": [
-      "index.html",
-      "logo-login.svg",
-      "main.js",
-      "build/**/*"
-    ],
-    "extraFiles": [
-      {
-        "from": "focus.config.json",
-        "to": "focus.config.json"
-      }
-    ],
-    "directories": {
-      "buildResources": "build",
-      "output": "dist"
-    },
-    "asar": true,
-    "artifactName": "Focus-${version}-${os}-${arch}.${ext}",
-    "mac": {
-      "category": "public.app-category.productivity",
-      "icon": "build/icon.icns",
-      "target": [
-        "dmg",
-        "zip"
-      ]
-    },
-    "win": {
-      "icon": "build/icon.ico",
-      "target": [
-        "portable",
-        "zip"
+  "config": {
+    "forge": {
+      "packagerConfig": {
+        "asar": true,
+        "icon": "./build/icon",
+        "extraResource": [
+          "./focus.config.json"
+        ]
+      },
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "platforms": [
+            "win32"
+          ],
+          "config": {
+            "name": "focus",
+            "authors": "AsterLane",
+            "description": "Focus desktop app",
+            "setupExe": "FocusSetup.exe",
+            "setupIcon": "./build/icon.ico"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "win32"
+          ]
+        }
       ]
     }
   },
   "devDependencies": {
-    "electron": "^37.1.0",
-    "electron-builder": "^26.0.12"
+    "@electron-forge/cli": "^7.11.1",
+    "@electron-forge/maker-squirrel": "^7.11.1",
+    "@electron-forge/maker-zip": "^7.11.1",
+    "electron": "^37.1.0"
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.1"
   }
 }

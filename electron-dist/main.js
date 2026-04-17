@@ -1,6 +1,12 @@
 const path = require('path');
 const fs = require('fs');
-const { app, BrowserWindow, Tray, Menu, nativeImage, screen, ipcMain } = require('electron');
+const electron = require('electron');
+
+if (require('electron-squirrel-startup')) {
+    electron.app.quit();
+}
+
+const { app, BrowserWindow, Tray, Menu, nativeImage, screen, ipcMain } = electron;
 
 let mainWindow = null;
 let tray = null;
