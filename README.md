@@ -409,7 +409,7 @@ npm run pack:dir
 ```
 
 ### apk打包
-在Android Studio加载electron-dist文件，配置好Capacitor环境后将gradle、
+在 Android Studio 中加载 electron-dist
 
 1. 软件和环境
 ```text
@@ -446,7 +446,10 @@ AndroidManifest.xml: 允许 HTTP 连接 (android:usesCleartextTraffic="true")
 network_security_config.xml: 允许特定域名的 HTTP
 focus.config.json: 后端 API 地址
 ```
-
+5.APK 输出位置
+```text
+android\app\build\outputs\apk\debug\app-debug.apk
+```
 
 ### 打包输出说明
 
