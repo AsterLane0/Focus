@@ -408,6 +408,46 @@ npm run pack:mac
 npm run pack:dir
 ```
 
+### apk打包
+在Android Studio加载electron-dist文件，配置好Capacitor环境后将gradle、
+
+1. 软件和环境
+```text
+Android Studio: D:\android-studio - 用于打开和管理 Android 项目
+Gradle: Android 构建系统（版本 8.2）
+Java: JDK（Android Studio 自带）
+```
+
+2. 项目结构
+```text
+E:\Focus-main (3)\Focus-main\electron-dist\
+├── index.html          # 源前端文件
+├── www\              # Web 资源目录
+└── android\          # Android 项目
+    ├── app\
+    │   ├── src\main\
+    │   │   ├── assets\public\  # 前端打包目录
+    │   │   ├── java\com\asterlane\focus\
+    │   │   └── res\
+    │   └── build.gradle
+    └── gradle\
+```
+
+3. 构建命令
+```bash
+cd E:\Focus-main (3)\Focus-main\electron-dist\android
+.\gradlew.bat assembleDebug
+APK 输出位置：android\app\build\outputs\apk\debug\app-debug.apk
+```
+
+4. 关键配置
+```text
+AndroidManifest.xml: 允许 HTTP 连接 (android:usesCleartextTraffic="true")
+network_security_config.xml: 允许特定域名的 HTTP
+focus.config.json: 后端 API 地址
+```
+
+
 ### 打包输出说明
 
 常见输出目录：
