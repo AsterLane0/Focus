@@ -1,23 +1,35 @@
 <!DOCTYPE html>
+<!-- Focus 应用主界面 HTML 文件 -->
+<!-- 这是一个基于 Electron 开发的专注计时应用，类似番茄钟，包含计时、统计、AI 分析等功能 -->
 <html lang="zh-CN" style="background: transparent;">
 <head>
     <meta charset="UTF-8">
-    <title></title>
+    <title>Focus - 专注计时应用</title>
     <style>
+        /* 全局样式和变量定义 */
+        .window-container { transform: scale(calc(min(100vw, 100vh) / 300)) !important; transform-origin: top left !important; }
+        
+        /* CSS 变量定义 - 应用的颜色和尺寸主题 */
         :root {
+            /* 应用尺寸 */
             --app-width: 210px;
             --app-height: 300px;
-            --primary-solid: #764ba2;
-            --primary-deep: #5f3fa8;
-            --primary-soft: #b99cf7;
-            --primary-gradient: linear-gradient(135deg, #b08cf5 0%, #8b63dc 45%, #6d49b4 100%);
-            --primary-gradient-soft: linear-gradient(135deg, rgba(176, 140, 245, 0.95) 0%, rgba(139, 99, 220, 0.95) 55%, rgba(109, 73, 180, 0.95) 100%);
-            --break-solid: #7fbf98;
-            --break-deep: #66a983;
-            --break-soft: #c5edd5;
-            --break-gradient: linear-gradient(135deg, #c7eed6 0%, #97d6b0 48%, #72bc90 100%);
+            
+            /* 主色调 - 专注模式 */
+            --primary-solid: #764ba2;       /* 主色固体色 */
+            --primary-deep: #5f3fa8;        /* 主色深色 */
+            --primary-soft: #b99cf7;        /* 主色浅色 */
+            --primary-gradient: linear-gradient(135deg, #b08cf5 0%, #8b63dc 45%, #6d49b4 100%); /* 主色渐变 */
+            --primary-gradient-soft: linear-gradient(135deg, rgba(176, 140, 245, 0.95) 0%, rgba(139, 99, 220, 0.95) 55%, rgba(109, 73, 180, 0.95) 100%); /* 主色渐变（半透明） */
+            
+            /* 休息模式颜色 */
+            --break-solid: #7fbf98;         /* 休息色固体色 */
+            --break-deep: #66a983;          /* 休息色深色 */
+            --break-soft: #c5edd5;          /* 休息色浅色 */
+            --break-gradient: linear-gradient(135deg, #c7eed6 0%, #97d6b0 48%, #72bc90 100%); /* 休息色渐变 */
         }
 
+        /* 全局样式重置 */
         html, body {
             background: transparent !important;
             margin: 0 !important;
@@ -25,6 +37,7 @@
             border: none !important;
             overflow: hidden !important;
         }
+        
         * {
             margin: 0;
             padding: 0;
@@ -41,6 +54,7 @@
             background: transparent;
         }
 
+        /* 窗口容器 - 负责缩放和居中应用 */
         .window-container {
             position: fixed;
             top: 0;
@@ -51,19 +65,21 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            will-change: transform;
+            will-change: transform; /* 优化动画性能 */
         }
 
+        /* 内容包装器 - 应用的主容器 */
         .content-wrapper {
             position: relative;
             width: var(--app-width);
             height: var(--app-height);
             overflow: hidden;
             clip-path: inset(0);
-            -webkit-app-region: drag;
+            -webkit-app-region: drag; /* 允许拖动窗口 */
             transform-origin: center center;
         }
 
+        /* 禁止拖动的元素 - 确保交互元素可点击 */
         .content-wrapper button,
         .content-wrapper input,
         .content-wrapper select,
@@ -83,6 +99,7 @@
             -webkit-app-region: no-drag;
         }
 
+        /* 背景容器 - 提供半透明背景和模糊效果 */
         .bg-container {
             position: absolute;
             top: 0;
@@ -98,6 +115,7 @@
             overflow: hidden;
         }
 
+        /* 页面容器 - 应用的不同页面（如主页面、统计页面等） */
         .page {
             position: absolute;
             top: 0;
@@ -116,16 +134,19 @@
                 opacity 280ms ease;
         }
 
+        /* 页面切换动画 - 左侧页面 */
         .page.is-offscreen-left {
             opacity: 0.82;
             transform: translateX(-8px) scale(0.985);
         }
 
+        /* 页面切换动画 - 右侧页面 */
         .page.is-offscreen-right {
             opacity: 0.82;
             transform: translateX(8px) scale(0.985);
         }
 
+        /* 页面内部容器 - 每个页面的内部布局 */
         .page-inner {
             width: var(--app-width);
             height: var(--app-height);
@@ -134,6 +155,7 @@
             flex-direction: column;
         }
 
+        /* 主内容区域 - 主页面的主要内容 */
         .main-content {
             display: flex;
             flex-direction: column;
@@ -143,6 +165,7 @@
             height: 100%;
         }
 
+        /* 关闭按钮 - 窗口右上角的关闭按钮 */
         .close-btn {
             position: absolute;
             top: 3px;
@@ -158,6 +181,7 @@
             z-index: 100;
         }
 
+        /* 任务输入框 - 用于输入当前任务名称 */
         .task-input {
             width: 150px;
             font-size: 10px;
@@ -173,6 +197,7 @@
             color: #666;
         }
 
+        /* 计时器容器 - 包含圆形进度条和时间显示 */
         .timer-container {
             position: relative;
             width: 154px;
@@ -181,12 +206,13 @@
             flex-shrink: 0;
         }
 
+        /* 圆形进度条 - 显示计时进度 */
         .circle-progress {
             position: absolute;
             inset: 0;
             width: 100%;
             height: 100%;
-            transform: rotate(-90deg);
+            transform: rotate(-90deg); /* 旋转使进度从顶部开始 */
             transform-origin: center center;
             display: block;
             overflow: visible;
@@ -197,9 +223,10 @@
             stroke: url(#timerGradient);
             stroke-width: 6;
             stroke-linecap: round;
-            transition: stroke-dashoffset 1s linear;
+            transition: stroke-dashoffset 1s linear; /* 平滑的进度动画 */
         }
 
+        /* 时间显示 - 显示当前剩余时间 */
         .time-display {
             position: absolute;
             top: 50%;
@@ -213,11 +240,12 @@
             white-space: nowrap;
             text-align: center;
             font-family: "SF Mono", "SFMono-Regular", "Menlo", "Monaco", "Consolas", monospace;
-            font-variant-numeric: tabular-nums;
+            font-variant-numeric: tabular-nums; /* 等宽数字，确保时间变化时宽度不变 */
             font-feature-settings: "tnum" 1;
             z-index: 2;
         }
 
+        /* 按钮容器 - 包含开始/暂停、重置、跳过按钮 */
         .btn-container {
             display: flex;
             justify-content: center;
@@ -228,6 +256,7 @@
             flex-shrink: 0;
         }
 
+        /* 按钮样式 - 通用按钮 */
         .btn {
             width: 36px;
             height: 36px;
@@ -242,6 +271,7 @@
             color: white;
         }
 
+        /* 按钮图标 */
         .btn-icon {
             display: inline-flex;
             align-items: center;
@@ -252,6 +282,7 @@
             transform: translateY(-0.5px);
         }
 
+        /* 不同按钮图标的大小调整 */
         .btn-icon.skip {
             font-size: 15px;
         }
@@ -265,11 +296,13 @@
             letter-spacing: -0.08em;
         }
 
+        /* 休息模式按钮样式 */
         .btn.btn-break {
             background: var(--break-gradient);
             box-shadow: 0 6px 14px rgba(114, 188, 144, 0.24);
         }
 
+        /* 提示文本 - 显示当前模式（专注/休息） */
         .pomodoro-hint {
             color: #aaa;
             font-size: 8px;
@@ -280,12 +313,14 @@
             flex-shrink: 0;
         }
 
+        /* AI 偏好设置容器 */
         .ai-preference-wrap {
             width: 178px;
             margin-top: 4px;
             flex-shrink: 0;
         }
 
+        /* AI 偏好设置切换按钮 */
         .ai-preference-toggle {
             width: 100%;
             border: none;
@@ -298,6 +333,7 @@
             text-align: left;
         }
 
+        /* 切换按钮的展开/收起图标 */
         .ai-preference-toggle::after {
             content: "▾";
             float: right;
@@ -308,6 +344,7 @@
             content: "▴";
         }
 
+        /* AI 偏好设置弹窗背景 */
         .ai-preference-body {
             display: none;
             position: absolute;
@@ -320,10 +357,12 @@
             justify-content: center;
         }
 
+        /* 显示 AI 偏好设置弹窗 */
         .ai-preference-body.open {
             display: flex;
         }
 
+        /* AI 偏好设置弹窗 */
         .ai-preference-modal {
             width: 178px;
             padding: 10px;
@@ -333,6 +372,7 @@
             border: 1px solid rgba(118, 75, 162, 0.12);
         }
 
+        /* AI 偏好设置弹窗头部 */
         .ai-preference-modal-header {
             display: flex;
             align-items: center;
@@ -343,6 +383,7 @@
             font-weight: 600;
         }
 
+        /* AI 偏好设置弹窗关闭按钮 */
         .ai-preference-close {
             border: none;
             background: transparent;
@@ -352,6 +393,7 @@
             line-height: 1;
         }
 
+        /* 生成报告按钮 */
         .generate-report-btn {
             width: 100%;
             border: none;
@@ -365,6 +407,7 @@
             cursor: pointer;
         }
 
+        /* 生成报告按钮 - 加载状态 */
         .generate-report-btn.is-generating,
         .generate-report-btn:disabled {
             background: linear-gradient(135deg, #cfc8db 0%, #b8b1c6 100%) !important;
@@ -375,6 +418,7 @@
             filter: grayscale(0.15);
         }
 
+        /* 完成状态文本 */
         .completed {
             color: #4CAF50;
             font-size: 10px;
@@ -382,6 +426,7 @@
             text-align: center;
         }
 
+        /* 底部栏 - 包含登出按钮和统计按钮 */
         .bottom-bar {
             width: 100%;
             display: flex;
@@ -391,6 +436,7 @@
             margin-bottom: 8px;
         }
 
+        /* 登出按钮 */
         .logout-btn {
             border: none;
             background: transparent;
@@ -400,6 +446,7 @@
             padding: 0;
         }
 
+        /* 图标按钮 - 用于统计页面等 */
         .icon-btn {
             width: 20px;
             height: 20px;
@@ -411,10 +458,12 @@
             font-size: 10px;
         }
 
+        /* 登录页面样式 */
         .login-page .page-inner {
             overflow: hidden;
         }
 
+        /* 登录内容区域 */
         .login-content {
             display: flex;
             flex-direction: column;
@@ -426,6 +475,7 @@
             padding: 28px 24px 24px;
         }
 
+        /* 登录标志 - 应用图标 */
         .login-mark {
             width: 52px;
             height: 52px;
@@ -443,17 +493,20 @@
             image-rendering: -webkit-optimize-contrast;
         }
 
+        /* 登录卡片 - 包含选择器和登录按钮 */
         .login-card {
             width: 156px;
             padding: 0;
             margin-top: 2px;
         }
 
+        /* 登录选择器包装器 */
         .login-select-wrap {
             position: relative;
             margin-bottom: 12px;
         }
 
+        /* 选择器下拉箭头 */
         .login-select-wrap::after {
             content: "▾";
             position: absolute;
@@ -465,6 +518,7 @@
             pointer-events: none;
         }
 
+        /* 登录选择器 - 用于选择用户或登录方式 */
         .login-select {
             width: 100%;
             height: 34px;
@@ -482,6 +536,7 @@
             transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease, transform 160ms ease;
         }
 
+        /* 登录选择器 - 聚焦状态 */
         .login-select:focus {
             border-color: rgba(118, 75, 162, 0.22);
             box-shadow:
@@ -490,6 +545,7 @@
             background: rgba(255, 255, 255, 0.82);
         }
 
+        /* 登录按钮 */
         .login-button {
             width: 100%;
             height: 34px;
@@ -507,6 +563,7 @@
             transition: transform 180ms ease, box-shadow 220ms ease, filter 180ms ease;
         }
 
+        /* 登录按钮 - 悬停状态 */
         .login-button:hover {
             transform: translateY(-1px);
             box-shadow:
@@ -515,6 +572,7 @@
             filter: saturate(1.02);
         }
 
+        /* 登录按钮 - 点击状态 */
         .login-button:active {
             transform: translateY(0);
             box-shadow:
@@ -523,6 +581,7 @@
         }
 
         /* 统计页面样式 */
+        /* 统计页面头部 */
         .stats-header {
             display: flex;
             justify-content: flex-end;
@@ -532,6 +591,7 @@
             padding-top: 5px;
         }
 
+        /* 返回按钮 - 从统计页面返回主页面 */
         .stats-back {
             display: flex;
             align-items: center;
@@ -548,6 +608,7 @@
             margin-right: 5px;
         }
 
+        /* 统计内容区域 - 可滚动的内容区域 */
         .stats-content {
             flex: 1;
             overflow-y: scroll;
@@ -558,6 +619,7 @@
             -webkit-app-region: no-drag;
         }
         
+        /* 禁止拖动的元素 - 确保统计页面内的交互元素可点击 */
         .stats-content button,
         .stats-content .stat-col,
         .stats-content .stats-section,
@@ -565,10 +627,12 @@
             -webkit-app-region: no-drag;
         }
 
+        /* 隐藏滚动条 */
         .stats-content::-webkit-scrollbar {
             display: none;
         }
 
+        /* 标签按钮容器 - 用于切换不同的统计视图 */
         .tab-buttons {
             display: flex;
             gap: 6px;
@@ -579,6 +643,7 @@
             padding-top: 2px;
         }
 
+        /* 标签按钮 - 用于切换日/周/月视图 */
         .tab-btn {
             padding: 4px 8px;
             border: none;
@@ -597,21 +662,25 @@
                 filter 180ms ease;
         }
 
+        /* 标签按钮 - 悬停状态 */
         .tab-btn:hover {
             transform: translateY(-1px);
             filter: saturate(1.02);
         }
 
+        /* 标签按钮 - 点击状态 */
         .tab-btn:active {
             transform: translateY(0) scale(0.98);
         }
 
+        /* 标签按钮 - 激活状态 */
         .tab-btn.active {
             background: var(--primary-gradient);
             color: white;
             box-shadow: 0 8px 16px rgba(118, 75, 162, 0.16);
         }
 
+        /* 日期导航 - 用于切换日期 */
         .date-nav {
             display: flex;
             align-items: center;
@@ -620,6 +689,7 @@
             gap: 8px;
         }
 
+        /* 年月导航 - 用于选择年份和月份 */
         .ym-nav {
             display: flex;
             align-items: center;
@@ -629,6 +699,7 @@
             padding-left: 10px;
         }
 
+        /* 年月选择器 */
         .ym-select {
             border: 1px solid rgba(118, 75, 162, 0.15);
             border-radius: 8px;
@@ -639,6 +710,7 @@
             outline: none;
         }
 
+        /* 日历面板 - 显示日历视图 */
         .calendar-panel {
             margin: 4px 10px 10px;
             padding: 8px 8px 6px;
@@ -648,6 +720,7 @@
             overflow: hidden;
         }
 
+        /* 日历面板头部 */
         .calendar-panel-header {
             display: flex;
             justify-content: space-between;
@@ -657,6 +730,7 @@
             flex-wrap: nowrap;
         }
 
+        /* 日历标题 */
         .calendar-title {
             color: #5f4a86;
             font-weight: 600;
@@ -679,6 +753,7 @@
             font-size: 9.5px;
         }
 
+        /* 日历图例 */
         .calendar-legend {
             display: flex;
             align-items: center;
@@ -716,6 +791,7 @@
             background: var(--primary-solid);
         }
 
+        /* 日历星期标题 */
         .calendar-weekdays {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -726,12 +802,14 @@
             text-align: center;
         }
 
+        /* 日历网格 */
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 2px;
         }
 
+        /* 日历单元格 */
         .calendar-cell {
             position: relative;
             min-height: 20px;
@@ -748,10 +826,12 @@
             transition: transform 140ms ease, box-shadow 160ms ease, background 160ms ease;
         }
 
+        /* 空白日历单元格 */
         .calendar-cell.blank {
             background: transparent;
         }
 
+        /* 有数据的日历单元格 */
         .calendar-cell.has-data {
             background: rgba(118, 75, 162, 0.12);
             color: #5f3f91;
@@ -759,27 +839,33 @@
             cursor: pointer;
         }
 
+        /* 选中的日历单元格 */
         .calendar-cell.selected {
             background: var(--primary-gradient);
             color: #fff;
         }
 
+        /* 有数据的日历单元格 - 点击状态 */
         .calendar-cell.has-data:active {
             transform: scale(0.98);
         }
 
+        /* 日历单元格 - 点击动画 */
         .calendar-cell.is-clicking {
             animation: calendarCellTap 180ms ease-out;
         }
 
+        /* 选中的日历单元格 - 点击状态 */
         .calendar-cell.selected.is-clicking {
             box-shadow: 0 0 0 2px rgba(139, 99, 220, 0.10);
         }
 
+        /* 禁用的日历单元格 */
         .calendar-cell.disabled {
             opacity: 0.35;
         }
 
+        /* 日历单元格中的数据点 */
         .calendar-cell .dot {
             position: absolute;
             bottom: 2px;
@@ -789,6 +875,7 @@
             background: var(--primary-solid);
         }
 
+        /* 日历单元格点击动画 */
         @keyframes calendarCellTap {
             0% {
                 transform: scale(1);
@@ -801,6 +888,7 @@
             }
         }
 
+        /* 减少动画 - 针对系统偏好 */
         @media (prefers-reduced-motion: reduce) {
             .page,
             .calendar-cell,
@@ -810,6 +898,7 @@
             }
         }
 
+        /* 日期按钮 - 用于切换日期 */
         .date-btn {
             width: auto;
             height: auto;
@@ -821,6 +910,7 @@
             padding: 2px 4px;
         }
 
+        /* 禁用的日期按钮 */
         .date-btn.disabled {
             background: transparent;
             color: #999;
@@ -828,12 +918,14 @@
             opacity: 0.5;
         }
 
+        /* 日期文本 */
         .date-text {
             font-size: 10px;
             color: #333;
             white-space: nowrap;
         }
 
+        /* 专注分数行 */
         .focus-score-row {
             display: flex;
             justify-content: space-between;
@@ -854,18 +946,21 @@
             font-weight: bold;
         }
 
+        /* 查看详情链接 */
         .view-detail {
             font-size: 9px;
             color: #aaa;
             cursor: pointer;
         }
 
+        /* 统计行 - 包含多个统计列 */
         .stats-row {
             display: flex;
             gap: 8px;
             margin-bottom: 12px;
         }
 
+        /* 统计列 - 显示单个统计数据 */
         .stat-col {
             flex: 1;
             background: rgba(255, 255, 255, 0.5);
@@ -891,6 +986,7 @@
             color: #888;
         }
 
+        /* 统计 section - 包含相关统计数据 */
         .stats-section {
             background: rgba(118, 75, 162, 0.1);
             border-radius: 8px;
@@ -913,6 +1009,7 @@
             line-height: 1.2;
         }
 
+        /* 占位符 - 当没有数据时显示 */
         .section-placeholder {
             font-size: 10px;
             color: #aaa;
@@ -926,6 +1023,7 @@
             overflow: visible;
         }
 
+        /* AI 分析文本 */
         .ai-analysis-text {
             font-size: 8px;
             color: #5f4a86;
@@ -935,12 +1033,14 @@
             min-height: 30px;
         }
 
+        /* AI 分析提示 */
         .ai-analysis-hint {
             font-size: 7px;
             color: #9f92b7;
             margin-top: 4px;
         }
 
+        /* AI 偏好设置输入框 */
         .ai-preference-input {
             width: 100%;
             min-height: 34px;
@@ -956,17 +1056,20 @@
             font-family: inherit;
         }
 
+        /* AI 偏好设置输入框 - 聚焦状态 */
         .ai-preference-input:focus {
             border-color: rgba(118, 75, 162, 0.4);
             box-shadow: 0 0 0 1px rgba(118, 75, 162, 0.12);
         }
 
+        /* AI 偏好设置提示 */
         .ai-preference-hint {
             font-size: 7px;
             color: #9f92b7;
             margin-top: 4px;
         }
 
+        /* 趋势图表容器 */
         .trend-wrap {
             display: flex;
             flex-direction: column;
@@ -974,6 +1077,7 @@
             margin-left: 0;
         }
 
+        /* 日趋势图表 - 横向滚动 */
         .trend-scroll-day {
             width: 100%;
             overflow-x: auto;
@@ -982,16 +1086,19 @@
             scrollbar-width: thin;
         }
 
+        /* 趋势图表 SVG */
         .trend-svg {
             width: 100%;
             height: 84px;
             display: block;
         }
 
+        /* 周趋势图表 SVG */
         .trend-svg-week {
             height: 104px;
         }
 
+        /* 趋势标签 */
         .trend-labels {
             display: flex;
             justify-content: space-between;
@@ -1010,17 +1117,20 @@
             text-overflow: ellipsis;
         }
 
+        /* 周趋势图表容器 */
         .trend-wrap-week {
             position: relative;
             padding-bottom: 18px;
         }
 
+        /* 趋势轴 */
         .trend-axis {
             position: relative;
             height: 14px;
             margin-top: 2px;
         }
 
+        /* 周轴标签 */
         .week-axis-label {
             position: absolute;
             transform: translateX(-50%);
@@ -1029,12 +1139,14 @@
             white-space: nowrap;
         }
 
+        /* 周数据点标签 */
         .week-point-label {
             font-size: 7px;
             fill: url(#chartGradient);
             font-weight: 600;
         }
 
+        /* 趋势元数据 */
         .trend-meta {
             display: flex;
             justify-content: space-between;
@@ -1042,6 +1154,7 @@
             color: #8b7ea8;
         }
 
+        /* 日轴 */
         .day-axis {
             position: relative;
             height: 12px;
@@ -1050,24 +1163,28 @@
             color: #8b7ea8;
         }
 
+        /* 日轴标签 */
         .day-axis-label {
             position: absolute;
             transform: translateX(-50%);
             white-space: nowrap;
         }
 
+        /* 日数据点标签 */
         .day-point-label {
             font-size: 7px;
             fill: url(#chartGradient);
             font-weight: 600;
         }
 
+        /* 趋势图表容器 */
         .trend-chart-box {
             position: relative;
             margin: 0 auto;
             overflow: visible;
         }
 
+        /* 图表提示框 */
         .chart-tooltip {
             position: absolute;
             min-width: 56px;
@@ -1090,6 +1207,7 @@
             content: none;
         }
 
+        /* 图表提示框时间 */
         .chart-tooltip-time {
             font-weight: 600;
             margin-bottom: 1px;
@@ -1097,6 +1215,7 @@
             text-align: center;
         }
 
+        /* 图表提示框行 */
         .chart-tooltip-row {
             display: flex;
             justify-content: space-between;
@@ -1104,6 +1223,7 @@
             white-space: nowrap;
         }
 
+        /* 提示框淡入动画 */
         @keyframes tooltipFadeIn {
             from {
                 opacity: 0;
@@ -1115,10 +1235,12 @@
             }
         }
 
+        /* 图表提示框键 */
         .chart-tooltip-key {
             color: #8b7ea8;
         }
 
+        /* Y轴 */
         .chart-y-axis {
             position: absolute;
             top: 0;
@@ -1126,6 +1248,7 @@
             pointer-events: none;
         }
 
+        /* Y轴刻度 */
         .chart-y-axis-tick {
             position: absolute;
             right: 8px;
@@ -1135,6 +1258,7 @@
             white-space: nowrap;
         }
 
+        /* Y轴线 */
         .chart-y-axis-line {
             position: absolute;
             right: 2px;
@@ -1142,6 +1266,7 @@
             background: rgba(118, 75, 162, 0.12);
         }
 
+        /* X轴线 */
         .chart-x-axis-line {
             position: absolute;
             left: 0;
@@ -1150,26 +1275,31 @@
             background: rgba(118, 75, 162, 0.12);
         }
 
+        /* 图表网格线 */
         .chart-grid-line {
             stroke: rgba(118, 75, 162, 0.16);
             stroke-width: 1;
             stroke-dasharray: 3 4;
         }
 
+        /* 周图表垂直网格线 */
         .chart-grid-line.week-vertical {
             stroke: rgba(139, 99, 220, 0.12);
             stroke-dasharray: 3 7;
         }
 
+        /* 周图表水平网格线 */
         .chart-grid-line.week-horizontal {
             stroke: rgba(139, 99, 220, 0.09);
             stroke-dasharray: none;
         }
 
+        /* 周图表表面 */
         .week-chart-surface {
             fill: url(#weekAreaGradient);
         }
 
+        /* 周图表幽灵线 */
         .week-chart-ghost-line {
             fill: none;
             stroke: rgba(255, 255, 255, 0.58);
@@ -1178,6 +1308,7 @@
             stroke-linejoin: round;
         }
 
+        /* 周图表线 */
         .week-chart-line {
             fill: none;
             stroke: url(#weekLineGradient);
@@ -1187,34 +1318,41 @@
             filter: drop-shadow(0 4px 10px rgba(139, 99, 220, 0.16));
         }
 
+        /* 周数据点环 */
         .week-point-ring {
             fill: rgba(255, 255, 255, 0.84);
             stroke: rgba(139, 99, 220, 0.24);
             stroke-width: 1;
         }
 
+        /* 周数据点核心 */
         .week-point-core {
             fill: url(#weekLineGradient);
         }
 
+        /* 选中的周数据点 */
         .week-point-core.selected {
             filter: drop-shadow(0 0 8px rgba(139, 99, 220, 0.34));
         }
 
+        /* 缺失的周数据点环 */
         .week-point-missing-ring {
             fill: rgba(255, 255, 255, 0.34);
             stroke: rgba(186, 170, 217, 0.5);
             stroke-width: 1;
         }
 
+        /* 缺失的周数据点核心 */
         .week-point-missing-core {
             fill: rgba(186, 170, 217, 0.34);
         }
 
+        /* 选中数据点的光晕 */
         .selected-point-halo {
             filter: blur(2px);
         }
 
+        /* 图表值标签 */
         .chart-value-label {
             position: absolute;
             color: #8b63dc;
@@ -1226,6 +1364,7 @@
             text-shadow: 0 0 2px #fff, 0 0 2px #fff;
         }
 
+        /* 时间周期项 */
         .period-item {
             background: rgba(255, 255, 255, 0.6);
             border-radius: 8px;
@@ -1234,12 +1373,14 @@
             text-align: left;
         }
 
+        /* 时间周期列表 - 网格布局 */
         .period-list {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 6px;
         }
 
+        /* 时间周期芯片 - 显示单个时间周期 */
         .period-chip {
             position: relative;
             border: none;
@@ -1266,6 +1407,7 @@
                 filter 220ms ease;
         }
 
+        /* 时间周期芯片 - 激活状态 */
         .period-chip.active {
             background: var(--primary-gradient);
             color: #fff;
@@ -1275,25 +1417,30 @@
                 periodChipPulse 2.4s ease-in-out infinite;
         }
 
+        /* 时间周期芯片 - 正常状态 */
         .period-chip.normal {
             background: rgba(118, 75, 162, 0.10);
         }
 
+        /* 时间周期芯片 - 过载状态 */
         .period-chip.overload {
             background: rgba(224, 176, 184, 0.28);
             color: #8c5a66;
         }
 
+        /* 时间周期芯片 - 激活且正常状态 */
         .period-chip.active.normal {
             background: var(--primary-gradient);
             color: #fff;
         }
 
+        /* 时间周期芯片 - 激活且过载状态 */
         .period-chip.active.overload {
             background: linear-gradient(135deg, #d89aa4 0%, #c97b86 100%);
             color: #fff;
         }
 
+        /* 时间周期芯片 - 悬停效果 */
         .period-chip::before {
             content: "";
             position: absolute;
@@ -1305,6 +1452,7 @@
             pointer-events: none;
         }
 
+        /* 时间周期芯片 - 激活光晕效果 */
         .period-chip::after {
             content: "";
             position: absolute;
@@ -1315,6 +1463,7 @@
             pointer-events: none;
         }
 
+        /* 时间周期芯片 - 悬停状态 */
         .period-chip:hover {
             transform: translateY(-2px) scale(1.01);
             box-shadow:
@@ -1323,15 +1472,18 @@
             filter: saturate(1.04);
         }
 
+        /* 时间周期芯片 - 悬停时显示渐变效果 */
         .period-chip:hover::before {
             transform: translateX(130%);
             opacity: 1;
         }
 
+        /* 时间周期芯片 - 点击状态 */
         .period-chip:active {
             transform: translateY(0) scale(0.99);
         }
 
+        /* 时间周期芯片 - 焦点状态 */
         .period-chip:focus-visible {
             outline: none;
             box-shadow:
@@ -1340,11 +1492,13 @@
                 0 10px 18px rgba(109, 73, 180, 0.14);
         }
 
+        /* 时间周期芯片 - 激活时显示光晕动画 */
         .period-chip.active::after {
             opacity: 1;
             animation: periodChipGlow 2.4s ease-in-out infinite;
         }
 
+        /* 时间周期芯片 - 时间显示 */
         .period-chip-time {
             font-size: 8px;
             font-weight: 600;
@@ -1355,6 +1509,7 @@
             text-overflow: ellipsis;
         }
 
+        /* 时间周期芯片 - 状态显示 */
         .period-chip-state {
             font-size: 6px;
             opacity: 0.88;
@@ -1363,6 +1518,7 @@
             text-overflow: ellipsis;
         }
 
+        /* 时间周期芯片进入动画 */
         @keyframes periodChipEnter {
             from {
                 opacity: 0;
@@ -1374,6 +1530,7 @@
             }
         }
 
+        /* 时间周期芯片脉冲动画 */
         @keyframes periodChipPulse {
             0%, 100% {
                 box-shadow: 0 10px 22px rgba(118, 75, 162, 0.24);
@@ -1383,6 +1540,7 @@
             }
         }
 
+        /* 时间周期芯片光晕动画 */
         @keyframes periodChipGlow {
             0%, 100% {
                 box-shadow: 0 0 0 0 rgba(139, 99, 220, 0.0);
@@ -1392,6 +1550,7 @@
             }
         }
 
+        /* 减少动画 - 针对系统偏好 */
         @media (prefers-reduced-motion: reduce) {
             .period-chip,
             .period-chip.active,
@@ -1405,17 +1564,20 @@
             }
         }
 
+        /* 时间周期 - 时间显示 */
         .period-time {
             font-size: 9px;
             color: #444;
             margin-bottom: 3px;
         }
 
+        /* 时间周期 - 分数显示 */
         .period-score {
             font-size: 8px;
             color: #8b7ea8;
         }
 
+        /* 饼图摘要 - 显示专注时间分布 */
         .pie-summary {
             width: min(100%, 190px);
             display: flex;
@@ -1424,6 +1586,7 @@
             gap: 10px;
         }
 
+        /* 饼图圆环 */
         .pie-ring {
             width: 144px;
             height: 144px;
@@ -1442,6 +1605,7 @@
                 0 0 0 1px rgba(255, 255, 255, 0.42) inset;
         }
 
+        /* 饼图圆环内部 */
         .pie-ring-inner {
             width: 90px;
             height: 90px;
@@ -1459,6 +1623,7 @@
                 0 0 0 1px rgba(255, 255, 255, 0.78) inset;
         }
 
+        /* 饼图圆环值 */
         .pie-ring-value {
             font-size: 22px;
             font-weight: 700;
@@ -1466,11 +1631,13 @@
             letter-spacing: -0.02em;
         }
 
+        /* 饼图圆环标签 */
         .pie-ring-label {
             font-size: 9px;
             margin-top: 3px;
         }
 
+        /* 饼图图例 */
         .pie-legend {
             width: calc(100% - 8px);
             display: flex;
@@ -1480,6 +1647,7 @@
             gap: 6px;
         }
 
+        /* 图例项 */
         .legend-item {
             display: flex;
             align-items: center;
@@ -1487,6 +1655,7 @@
             white-space: nowrap;
         }
 
+        /* 图例点 */
         .dot {
             width: 6px;
             height: 6px;
@@ -1494,15 +1663,18 @@
             display: inline-block;
         }
 
+        /* 图例点 - 专注状态 */
         .dot.focused {
             background: linear-gradient(135deg, rgba(173, 141, 238, 0.96), rgba(120, 82, 198, 0.92));
             box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.58);
         }
 
+        /* 图例点 - 空闲状态 */
         .dot.idle {
             background: rgba(214, 203, 235, 0.92);
         }
 
+        /* 饼图建议 */
         .pie-recommendation {
             width: calc(100% - 8px);
             background: rgba(118, 75, 162, 0.08);
@@ -1511,6 +1683,7 @@
             text-align: center;
         }
 
+        /* 饼图建议标题 */
         .pie-rec-title {
             font-size: 11px;
             color: #5d3d85;
@@ -1518,6 +1691,7 @@
             margin-bottom: 3px;
         }
 
+        /* 饼图建议消息 */
         .pie-rec-message {
             font-size: 7px;
             color: #777;
@@ -1525,6 +1699,7 @@
         }
 
         /* 饼图页面样式 */
+        /* 饼图页面返回按钮 */
         .pie-back {
             display: flex;
             align-items: center;
@@ -1541,6 +1716,7 @@
             margin-right: 3px;
         }
 
+        /* 饼图内容区域 */
         .pie-content {
             flex: 1;
             display: flex;
@@ -1550,15 +1726,19 @@
             -webkit-app-region: no-drag;
         }
         
+        /* 饼图占位符 - 禁止拖动 */
         .pie-placeholder {
             -webkit-app-region: no-drag;
         }
 
+        /* 饼图占位符 - 样式 */
         .pie-placeholder {
             font-size: 10px;
             color: #aaa;
         }
+        
         /* ===== 日历报告高亮 ===== */
+        /* 有报告的日历单元格 */
         .calendar-cell.has-report {
             position: relative;
             border-radius: 10px;
@@ -1567,7 +1747,7 @@
             transition: all 0.2s ease;
         }
 
-        /* 小紫点 */
+        /* 小紫点 - 报告徽章 */
         .calendar-cell .report-badge {
             position: absolute;
             bottom: 4px;
@@ -1579,25 +1759,25 @@
             box-shadow: 0 0 4px rgba(139, 99, 220, 0.55);
         }
 
-        /* hover（质感） */
+        /* hover（质感） - 有报告的日历单元格 */
         .calendar-cell.has-report:hover {
             transform: translateY(-1px) scale(1.05);
             box-shadow: 0 4px 8px rgba(139, 99, 220, 0.24);
         }
 
-        /* 选中 + 有报告 */
+        /* 选中 + 有报告 - 日历单元格 */
         .calendar-cell.has-report.selected {
             background: linear-gradient(135deg, #c6a8ff, #8b63dc);
             color: white;
             border: none;
         }
 
-        /* 普通数据弱化 */
+        /* 普通数据弱化 - 没有报告的日历单元格 */
         .calendar-cell.has-data:not(.has-report) {
             opacity: 0.7;
         }
 
-        /* 图例 */
+        /* 图例 - 有报告的点 */
         .calendar-legend-dot.has-report {
             background: #8b63dc;
             box-shadow: 0 0 3px rgba(139, 99, 220, 0.28);
@@ -1605,38 +1785,49 @@
     </style>
 </head>
 <body>
+    <!-- 窗口容器 - 负责缩放和居中应用 -->
     <div class="window-container">
+        <!-- 内容包装器 - 应用的主容器 -->
         <div class="content-wrapper" id="contentWrapper">
 
             <!-- 登录页面 -->
             <div class="page login-page" id="loginPage" style="left: 0;">
                 <div class="page-inner">
                     <div class="login-content">
+                        <!-- 登录标志 - 应用图标 -->
                         <div class="login-mark">
                             <img src="./logo-login.svg" alt="Focus logo">
                         </div>
+                        <!-- 登录卡片 -->
                         <div class="login-card">
+                            <!-- 用户选择器 -->
                             <div class="login-select-wrap">
                                 <select id="loginUserSelect" class="login-select">
                                     <option value="">加载中...</option>
                                 </select>
                             </div>
+                            <!-- 登录按钮 -->
                             <button onclick="loginUser()" class="login-button">登录</button>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- 背景容器 -->
             <div class="bg-container"></div>
             
             <!-- 主界面 -->
             <div class="page" id="mainPage">
                 <div class="page-inner">
+                    <!-- 关闭按钮 -->
                     <button class="close-btn" onclick="quitApp()">×</button>
                     <div class="main-content">
+                        <!-- 计时器容器 -->
                         <div class="timer-container" id="timerContainer">
+                            <!-- 圆形进度条 -->
                             <svg class="circle-progress" viewBox="0 0 110 110">
                                 <defs>
+                                    <!-- 计时器渐变 -->
                                     <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                                         <stop id="timerGradientStopStart" offset="0%" stop-color="#c6a8ff"></stop>
                                         <stop id="timerGradientStopMid" offset="45%" stop-color="#9a6df0"></stop>
@@ -1645,34 +1836,48 @@
                                 </defs>
                                 <circle cx="55" cy="55" r="50" id="progressCircle"/>
                             </svg>
+                            <!-- 时间显示 -->
                             <div class="time-display" id="timeDisplay">25:00</div>
                         </div>
                         
+                        <!-- 按钮容器 -->
                         <div class="btn-container" id="btnContainer">
+                            <!-- 开始/暂停按钮 -->
                             <button class="btn" onclick="toggleTimer()"><span class="btn-icon play">▶</span></button>
                         </div>
                         
+                        <!-- 番茄钟提示 -->
                         <div class="pomodoro-hint" id="pomodoroHint">今天第 1 个番茄钟</div>
 
+                        <!-- AI 偏好设置容器 -->
                         <div class="ai-preference-wrap">
+                            <!-- AI 偏好设置切换按钮 -->
                             <button class="ai-preference-toggle" id="aiPreferenceToggle" onclick="toggleAiPreferencePanel()">
                                 长期偏好
                             </button>
                         </div>
                         
+                        <!-- 底部栏 -->
                         <div class="bottom-bar">
+                            <!-- 统计按钮 -->
                             <button class="icon-btn" onclick="showStatsPage()">☰</button>
+                            <!-- 登出按钮 -->
                             <button class="logout-btn" onclick="logoutUser()">退出登录</button>
+                            <!-- 退出按钮 -->
                             <button class="icon-btn" onclick="quitApp()">×</button>
                         </div>
                     </div>
 
+                    <!-- AI 偏好设置弹窗背景 -->
                     <div class="ai-preference-body" id="aiPreferenceBody" onclick="closeAiPreferencePanel(event)">
+                        <!-- AI 偏好设置弹窗 -->
                         <div class="ai-preference-modal" onclick="event.stopPropagation()">
+                            <!-- 弹窗头部 -->
                             <div class="ai-preference-modal-header">
                                 <span>长期偏好</span>
                                 <button class="ai-preference-close" onclick="closeAiPreferencePanel()">×</button>
                             </div>
+                            <!-- AI 偏好设置输入框 -->
                             <textarea
                                 id="aiPreferenceInput"
                                 class="ai-preference-input"
@@ -1680,6 +1885,7 @@
                                 onkeydown="handleAiPreferenceKeydown(event)"
                                 oninput="handleAiPreferenceInput()"
                             ></textarea>
+                            <!-- AI 偏好设置提示 -->
                             <div class="ai-preference-hint" id="aiPreferenceHint">会记住当前用户的偏好</div>
                         </div>
                     </div>
@@ -1689,43 +1895,55 @@
             <!-- 统计页面 -->
             <div class="page stats-page" id="statsPage" style="left: -210px;">
                 <div class="page-inner">
+                    <!-- 统计页面头部 -->
                     <div class="stats-header">
                         <button class="close-btn" onclick="quitApp()">×</button>
                     </div>
+                    <!-- 返回按钮 -->
                     <div class="stats-back" onclick="hideStatsPage()">返回</div>
                     
+                    <!-- 统计内容区域 -->
                     <div class="stats-content">
+                        <!-- 标签按钮容器 -->
                         <div class="tab-buttons">
                             <button class="tab-btn active" id="dayTab" onclick="switchTab('day')">日</button>
                             <button class="tab-btn" id="weekTab" onclick="switchTab('week')">周</button>
                         </div>
 
+                        <!-- 年月导航 -->
                         <div class="ym-nav">
                             <select id="yearSelect" class="ym-select" onchange="changeYearMonth()"></select>
                             <select id="monthSelect" class="ym-select" onchange="changeYearMonth()"></select>
                         </div>
 
+                        <!-- 日历面板 -->
                         <div class="calendar-panel">
+                            <!-- 日历面板头部 -->
                             <div class="calendar-panel-header">
                                 <div class="calendar-title" id="calendarTitle">月历</div>
+                                <!-- 日历图例 -->
                                 <div class="calendar-legend">
                                     <span class="calendar-legend-item"><span class="calendar-legend-dot has-data"></span>有数据</span>
                                     <span class="calendar-legend-item"><span class="calendar-legend-dot has-report"></span>有报告</span>
                                     <span class="calendar-legend-item"><span class="calendar-legend-dot"></span>无数据</span>
                                 </div>
                             </div>
+                            <!-- 日历星期标题 -->
                             <div class="calendar-weekdays">
                                 <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
                             </div>
+                            <!-- 日历网格 -->
                             <div class="calendar-grid" id="monthCalendar"></div>
                         </div>
 
+                        <!-- 日期导航 -->
                         <div class="date-nav">
                             <button class="date-btn" id="prevDate" onclick="changeDate(-1)"><</button>
                             <span class="date-text" id="dateText">2026年3月18日</span>
                             <button class="date-btn" id="nextDate" onclick="changeDate(1)">></button>
                         </div>
                         
+                        <!-- 专注分数行 -->
                         <div class="focus-score-row">
                             <div>
                                 <span class="focus-score-label" id="focusScoreLabel">专注度：</span>
@@ -1734,17 +1952,21 @@
                             <span class="view-detail" onclick="showPiePage()">查看详情</span>
                         </div>
 
+                        <!-- 统计行 -->
                         <div class="stats-row">
+                            <!-- 总时长 -->
                             <div class="stat-col">
                                 <div class="stat-col-label">总时长</div>
                                 <div class="stat-col-value" id="totalTime">--</div>
                                 <div class="stat-col-unit">分钟</div>
                             </div>
+                            <!-- 专注时长 -->
                             <div class="stat-col">
                                 <div class="stat-col-label">专注时长</div>
                                 <div class="stat-col-value" id="focusTime">--</div>
                                 <div class="stat-col-unit">分钟</div>
                             </div>
+                            <!-- 平均心率 -->
                             <div class="stat-col">
                                 <div class="stat-col-label">平均心率</div>
                                 <div class="stat-col-value" id="heartRate">--</div>
@@ -1752,30 +1974,35 @@
                             </div>
                         </div>
 
+                        <!-- 今日任务 section -->
                         <div class="stats-section" id="dailyTaskSection">
                             <div class="section-label">今日任务</div>
+                            <!-- 今日任务输入框 -->
                             <textarea
                                 id="dailyTaskInput"
                                 class="ai-preference-input"
                                 placeholder="比如：今天主要复习英语，晚上整理笔记。"
                                 oninput="handleDailyTaskInput()"
                             ></textarea>
+                            <!-- 生成每日报告按钮 -->
                             <button class="generate-report-btn" id="generateReportBtn" onclick="generateDailyReport()">生成每日报告</button>
-
                         </div>
 
+                        <!-- AI 分析 section -->
                         <div class="stats-section" id="aiAnalysisSection">
                             <div class="section-label" id="aiAnalysisLabel">学习报告分析</div>
                             <div class="ai-analysis-text" id="aiAnalysisText">（等待生成中）</div>
                             <div class="ai-analysis-hint">基于豆包和当前统计结果生成</div>
                         </div>
 
+                        <!-- 番茄钟HRV曲线 section -->
                         <div class="stats-section">
                             <div class="section-label" id="hrvChartLabel">番茄钟HRV曲线</div>
                             <div class="section-sub-label" id="chartAxisLabel">纵轴：专注评分</div>
                             <div class="section-placeholder" id="hrvChart">（折线图待接入）</div>
                         </div>
                         
+                        <!-- 专注时段 section -->
                         <div class="stats-section" id="focusPeriodsSection">
                             <div class="section-label">专注时段</div>
                             <div class="section-placeholder" id="focusPeriods">（优秀时间段）</div>
@@ -1787,10 +2014,13 @@
             <!-- 饼图页面 -->
             <div class="page pie-page" id="piePage" style="left: 210px;">
                 <div class="page-inner">
+                    <!-- 饼图页面头部 -->
                     <div class="stats-header">
                         <button class="close-btn" onclick="quitApp()">×</button>
                     </div>
+                    <!-- 饼图页面返回按钮 -->
                     <div class="pie-back" onclick="hidePiePage()">返回</div>
+                    <!-- 饼图内容区域 -->
                     <div class="pie-content" id="pieContent">
                         <div class="pie-placeholder">饼图待接入</div>
                     </div>
@@ -1800,6 +2030,10 @@
     </div>
 
     <script>
+        /**
+         * 同步页面过渡状态
+         * 根据页面的left值添加相应的CSS类，用于页面过渡动画
+         */
         function syncPageTransitionState() {
             ['mainPage', 'statsPage', 'piePage'].forEach(id => {
                 const page = document.getElementById(id);
@@ -1814,6 +2048,10 @@
             });
         }
 
+        /**
+         * 显示登录页面
+         * 隐藏其他页面，只显示登录页面
+         */
         function showLoginPage() {
             document.getElementById('loginPage').style.display = 'block';
             document.getElementById('mainPage').style.display = 'none';
@@ -1821,6 +2059,10 @@
             document.getElementById('piePage').style.display = 'none';
         }
 
+        /**
+         * 显示主页面
+         * 隐藏登录页面，显示主页面、统计页面和饼图页面
+         */
         function showMainPage() {
             document.getElementById('loginPage').style.display = 'none';
             document.getElementById('mainPage').style.display = 'block';
@@ -1829,6 +2071,9 @@
             syncPageTransitionState();
         }
 
+        /**
+         * 切换AI偏好设置面板的显示/隐藏状态
+         */
         function toggleAiPreferencePanel() {
             const body = document.getElementById('aiPreferenceBody');
             const toggle = document.getElementById('aiPreferenceToggle');
@@ -1837,6 +2082,10 @@
             toggle.classList.toggle('expanded', isOpen);
         }
 
+        /**
+         * 关闭AI偏好设置面板
+         * @param {Event} event - 点击事件对象
+         */
         function closeAiPreferencePanel(event) {
             if (event) {
                 event.preventDefault();
@@ -1847,22 +2096,38 @@
             if (toggle) toggle.classList.remove('expanded');
         }
 
+        /**
+         * 获取每日报告就绪状态的存储键
+         * @returns {string} 存储键
+         */
         function getDailyReportReadyKey() {
             const userPart = currentUserId || 'guest';
             return `focus_daily_report_ready_${userPart}_${formatDateKey(currentDate)}`;
         }
 
+        /**
+         * 加载每日报告就绪状态
+         */
         function loadDailyReportReady() {
             const key = getDailyReportReadyKey();
             currentDailyReportReady = localStorage.getItem(key) === '1';
         }
 
+        /**
+         * 设置每日报告就绪状态
+         * @param {boolean} value - 是否就绪
+         */
         function setDailyReportReady(value) {
             const key = getDailyReportReadyKey();
             currentDailyReportReady = !!value;
             localStorage.setItem(key, currentDailyReportReady ? '1' : '0');
         }
 
+        /**
+         * 检查是否有仪表板数据
+         * @param {Object} summary - 仪表板数据摘要
+         * @returns {boolean} 是否有数据
+         */
         function hasDashboardData(summary = currentDashboard) {
             return !!(
                 summary &&
@@ -1874,6 +2139,10 @@
             );
         }
 
+        /**
+         * 更新生成报告按钮的状态
+         * @param {boolean} isGenerating - 是否正在生成
+         */
         function updateGenerateReportButton(isGenerating) {
             const button = document.getElementById('generateReportBtn');
             if (!button) return;
@@ -1883,6 +2152,9 @@
             button.textContent = isGenerating ? '正在生成中' : (hasData ? '生成每日报告' : '暂无数据');
         }
 
+        /**
+         * 更新每日任务部分的可见性
+         */
         function updateDailyTaskSectionVisibility() {
             const section = document.getElementById('dailyTaskSection');
             if (!section) return;
@@ -1890,6 +2162,10 @@
             updateGenerateReportButton(false);
         }
 
+        /**
+         * 用户登出
+         * 重置所有用户相关的状态和数据
+         */
         function logoutUser() {
             currentUserId = null;
             currentDashboard = null;
@@ -1932,6 +2208,10 @@
             loadLoginUserList();
         }
 
+        /**
+         * 用户登录
+         * @async
+         */
         async function loginUser() {
             const select = document.getElementById('loginUserSelect');
             const userId = select.value;
@@ -1956,6 +2236,10 @@
         const BASE_WIDTH = 210;
         const BASE_HEIGHT = 300;
 
+        /**
+         * 处理窗口大小调整
+         * 根据窗口大小缩放应用内容
+         */
         function handleResize() {
             const wrapper = document.getElementById('contentWrapper');
             const scale = Math.min(window.innerWidth / BASE_WIDTH, window.innerHeight / BASE_HEIGHT);
@@ -1998,6 +2282,11 @@
             max_date: null,
         };
 
+        /**
+         * 解析API基础URL
+         * 从URL参数或本地存储中获取API基础URL
+         * @returns {string} API基础URL
+         */
         function resolveApiBase() {
             const params = new URLSearchParams(window.location.search || '');
             const queryApiBase = (params.get('api_base') || '').trim();
@@ -2017,21 +2306,41 @@
 
         const API_BASE = resolveApiBase();
 
+        /**
+         * 格式化日期为中文格式
+         * @param {Date} date - 日期对象
+         * @returns {string} 格式化后的日期字符串
+         */
         function formatDate(date) {
             return date.getFullYear() + '年' + (date.getMonth() + 1) + '月' + date.getDate() + '日';
         }
 
+        /**
+         * 格式化日期为YYYY-MM-DD格式
+         * @param {Date} date - 日期对象
+         * @returns {string} 格式化后的日期键
+         */
         function formatDateKey(date) {
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
             return `${date.getFullYear()}-${month}-${day}`;
         }
 
+        /**
+         * 解析日期键为日期对象
+         * @param {string} dateKey - 日期键，格式为YYYY-MM-DD
+         * @returns {Date} 日期对象
+         */
         function parseDateKey(dateKey) {
             const [year, month, day] = dateKey.split('-').map(Number);
             return new Date(year, month - 1, day);
         }
 
+        /**
+         * 格式化周范围标签
+         * @param {Date} date - 日期对象
+         * @returns {string} 周范围标签
+         */
         function formatWeekRangeLabel(date) {
             const start = new Date(date);
             const day = start.getDay();
@@ -2042,10 +2351,18 @@
             return `${start.getMonth() + 1}月${start.getDate()}日 - ${end.getMonth() + 1}月${end.getDate()}日`;
         }
 
+        /**
+         * 获取日历日期集合
+         * @returns {Set} 日期集合
+         */
         function getCalendarDateSet() {
             return new Set((currentCalendarIndex.available_dates || []).map(String));
         }
 
+        /**
+         * 获取选中的月份键
+         * @returns {string} 月份键，格式为YYYY-MM
+         */
         function getSelectedMonthKey() {
             const yearSelect = document.getElementById('yearSelect');
             const monthSelect = document.getElementById('monthSelect');
@@ -2054,6 +2371,9 @@
             return `${year}-${String(month).padStart(2, '0')}`;
         }
 
+        /**
+         * 更新日历标题
+         */
         function updateCalendarTitle() {
             const title = document.getElementById('calendarTitle');
             if (!title) return;
@@ -2063,6 +2383,9 @@
             `;
         }
 
+        /**
+         * 渲染月历
+         */
         function renderMonthCalendar() {
             const container = document.getElementById('monthCalendar');
             if (!container) return;
@@ -2115,6 +2438,9 @@
             updateCalendarTitle();
         }
 
+        /**
+         * 更新月份选择器标记
+         */
         function updateMonthSelectMarks() {
             const monthSelect = document.getElementById('monthSelect');
             if (!monthSelect) return;
@@ -2129,6 +2455,9 @@
             });
         }
 
+        /**
+         * 更新日期显示
+         */
         function updateDateDisplay() {
             const displayText = currentTab === 'week'
                 ? (currentRangeLabel || formatWeekRangeLabel(currentDate))
@@ -2141,21 +2470,31 @@
             loadDailyReportReady();
         }
 
-            function updateAiTitle() {
-                const label = document.getElementById("aiAnalysisLabel");
-                if (!label) return;
+        /**
+         * 更新AI分析标题
+         */
+        function updateAiTitle() {
+            const label = document.getElementById("aiAnalysisLabel");
+            if (!label) return;
 
-                label.textContent = currentTab === "day"
-                    ? "今日学习分析"
-                    : "本周学习分析";
-            }
+            label.textContent = currentTab === "day"
+                ? "今日学习分析"
+                : "本周学习分析";
+        }
 
+        /**
+         * 更新专注分数标签
+         */
         function updateFocusScoreLabel() {
             const label = document.getElementById('focusScoreLabel');
             if (!label) return;
             label.textContent = currentTab === 'week' ? '周平均专注度：' : '专注度：';
         }
 
+        /**
+         * 更新HRV图表标签
+         * @param {Object} period - 时间段对象
+         */
         function updateHrvChartLabel(period) {
             const label = document.getElementById('hrvChartLabel');
             if (!label) return;
@@ -2166,6 +2505,10 @@
             label.textContent = `${period.start_time} - ${period.end_time} · ${period.state || '正常'}`;
         }
 
+        /**
+         * 渲染AI分析
+         * @param {Object} summary - 分析摘要
+         */
         function renderAiAnalysis(summary) {
             const text = document.getElementById('aiAnalysisText');
             if (!text) return;
@@ -2188,6 +2531,11 @@
             text.textContent = summary.ai_stress_analysis || (currentTab === 'week' ? '暂无本周分析' : '暂无今日分析');
         }
 
+        /**
+         * 选择番茄钟曲线点
+         * @param {number} index - 点的索引
+         * @param {Event} event - 点击事件对象
+         */
         function selectPomodoroCurvePoint(index, event) {
             if (event) {
                 event.stopPropagation();
@@ -2197,6 +2545,10 @@
             renderPomodoroCurve(currentPomodoroCurvePoints);
         }
 
+        /**
+         * 清除番茄钟曲线选择
+         * @param {Event} event - 点击事件对象
+         */
         function clearPomodoroCurveSelection(event) {
             if (event && event.target && event.target.closest && event.target.closest('[data-point-hit="1"]')) return;
             if (!currentPomodoroCurvePoints || currentPomodoroCurvePoints.length === 0) return;
@@ -2204,6 +2556,11 @@
             renderPomodoroCurve(currentPomodoroCurvePoints);
         }
 
+        /**
+         * 选择周趋势点
+         * @param {number} index - 点的索引
+         * @param {Event} event - 点击事件对象
+         */
         function selectWeekTrendPoint(index, event) {
             if (event) event.stopPropagation();
             currentSelectedWeekPointIndex = index;
@@ -2212,6 +2569,10 @@
             }
         }
 
+        /**
+         * 清除周趋势选择
+         * @param {Event} event - 点击事件对象
+         */
         function clearWeekTrendSelection(event) {
             if (event && event.target && event.target.closest && event.target.closest('[data-point-hit="1"]')) return;
             currentSelectedWeekPointIndex = -1;
@@ -2220,6 +2581,10 @@
             }
         }
 
+        /**
+         * 渲染番茄钟曲线
+         * @param {Array} points - 曲线数据点
+         */
         function renderPomodoroCurve(points) {
             const container = document.getElementById('hrvChart');
             if (!points || points.length === 0) {
@@ -2340,6 +2705,10 @@
             `;
         }
 
+        /**
+         * 选择番茄钟
+         * @param {number} index - 番茄钟索引
+         */
         function selectPomodoro(index) {
             if (!currentFocusPeriods || currentFocusPeriods.length === 0) return;
             currentSelectedPomodoroIndex = Math.max(0, Math.min(index, currentFocusPeriods.length - 1));
@@ -2352,6 +2721,10 @@
             renderPomodoroCurve(period.hrv_points || []);
         }
 
+        /**
+         * 渲染趋势图表
+         * @param {Array} points - 趋势数据点
+         */
         function renderTrendChart(points) {
             const container = document.getElementById('hrvChart');
             if (!points || points.length === 0) {
@@ -2577,6 +2950,10 @@
             container.classList.add('chart-host');
         }
 
+        /**
+         * 渲染专注时段
+         * @param {Array} periods - 专注时段数据
+         */
         function renderFocusPeriods(periods) {
             const container = document.getElementById('focusPeriods');
             const section = document.getElementById('focusPeriodsSection');
@@ -2611,6 +2988,11 @@
             container.innerHTML = `<div class="period-list">${items}</div>`;
         }
 
+        /**
+         * 设置饼图环进度
+         * @param {HTMLElement} element - 饼图元素
+         * @param {number} percent - 百分比值
+         */
         function setPieRingProgress(element, percent) {
             if (!element) return;
             const safePercent = Math.max(0, Math.min(100, Number(percent) || 0));
@@ -2623,6 +3005,10 @@
             )`;
         }
 
+        /**
+         * 动画显示饼图值
+         * @param {number} targetPercent - 目标百分比
+         */
         function animatePieValue(targetPercent) {
             const valueElement = document.getElementById('pieRingValue');
             if (!valueElement) return;
@@ -2644,6 +3030,10 @@
             requestAnimationFrame(frame);
         }
 
+        /**
+         * 动画显示饼图环
+         * @param {number} percent - 百分比值
+         */
         function animatePieRing(percent) {
             const pieRing = document.getElementById('pieRing');
             const valueElement = document.getElementById('pieRingValue');
@@ -2676,6 +3066,9 @@
             requestAnimationFrame(frame);
         }
 
+        /**
+         * 重放饼图动画
+         */
         function replayPieAnimation() {
             const pieRing = document.getElementById('pieRing');
             if (!pieRing) return;
@@ -2683,6 +3076,10 @@
             animatePieRing(percent);
         }
 
+        /**
+         * 渲染饼图页面
+         * @param {Object} summary - 数据摘要
+         */
         function renderPiePage(summary) {
             const container = document.getElementById('pieContent');
             if (!summary) {
@@ -2734,6 +3131,10 @@
             }
         }
 
+        /**
+         * 渲染仪表板错误
+         * @param {string} message - 错误信息
+         */
         function renderDashboardError(message) {
             currentDashboard = null;
             currentSelectedPomodoroIndex = 0;
@@ -2749,6 +3150,11 @@
             updateGenerateReportButton(false);
         }
 
+        /**
+         * 获取最近的可用日期键
+         * @param {string} targetDateKey - 目标日期键
+         * @returns {string|null} 最近的可用日期键
+         */
         function getClosestAvailableDateKey(targetDateKey) {
             const availableDates = (currentCalendarIndex?.available_dates || []).map(String).sort();
             if (!availableDates.length) {
@@ -2774,6 +3180,10 @@
             return closestDate;
         }
 
+        /**
+         * 应用仪表板数据
+         * @param {Object} summary - 数据摘要
+         */
         function applyDashboard(summary) {
             currentDashboard = summary;
             currentSelectedWeekPointIndex = -1;
@@ -2801,6 +3211,13 @@
             updateGenerateReportButton(false);
         }
 
+        /**
+         * 加载仪表板数据
+         * @async
+         * @param {Object} options - 选项
+         * @param {boolean} options.generateReport - 是否生成报告
+         * @returns {Promise<boolean>} 是否加载成功
+         */
         async function loadDashboardData(options = {}) {
             const { generateReport = false } = options;
             const shouldGenerate = currentTab === 'day' && generateReport;
@@ -2865,6 +3282,10 @@
             }
         }
 
+        /**
+         * 加载日历索引
+         * @async
+         */
         async function loadCalendarIndex() {
             const params = new URLSearchParams();
             if (currentUserId) {
@@ -2893,6 +3314,10 @@
             }
         }
 
+        /**
+         * 更改日期
+         * @param {number} delta - 日期变化量
+         */
         function changeDate(delta) {
             const newDate = new Date(currentDate);
             newDate.setDate(newDate.getDate() + (currentTab === 'week' ? delta * 7 : delta));
@@ -2902,6 +3327,9 @@
             loadDashboardData();
         }
 
+        /**
+         * 填充年月选择器
+         */
         function populateYearMonthSelectors() {
             const yearSelect = document.getElementById('yearSelect');
             const monthSelect = document.getElementById('monthSelect');
@@ -2952,16 +3380,28 @@
             updateMonthSelectMarks();
         }
 
+        /**
+         * 同步年月选择器
+         */
         function syncYearMonthSelectors() {
             populateYearMonthSelectors();
         }
 
+        /**
+         * 刷新日历和仪表板
+         * @async
+         * @param {Object} options - 选项
+         * @returns {Promise<boolean>} 是否刷新成功
+         */
         async function refreshCalendarAndDashboard(options = {}) {
             await loadCalendarIndex();
             loadDailyTaskForCurrentDate();
             return loadDashboardData(options);
         }
 
+        /**
+         * 更改年月
+         */
         function changeYearMonth() {
             const yearSelect = document.getElementById('yearSelect');
             const monthSelect = document.getElementById('monthSelect');
@@ -2976,6 +3416,10 @@
             refreshCalendarAndDashboard();
         }
 
+        /**
+         * 选择日历日期
+         * @param {string} dateKey - 日期键
+         */
         function selectCalendarDate(dateKey) {
             const availableDates = getCalendarDateSet();
             if (!availableDates.has(dateKey)) return;
@@ -2992,6 +3436,10 @@
             refreshCalendarAndDashboard();
         }
 
+        /**
+         * 切换标签页
+         * @param {string} tab - 标签页名称
+         */
         function switchTab(tab) {
             currentTab = tab;
             currentSelectedWeekPointIndex = -1;
@@ -3008,6 +3456,9 @@
             refreshCalendarAndDashboard();
         }
 
+        /**
+         * 显示统计页面
+         */
         function showStatsPage() {
             document.getElementById('mainPage').style.left = `${BASE_WIDTH}px`;
             document.getElementById('statsPage').style.left = '0px';
@@ -3015,12 +3466,18 @@
             refreshCalendarAndDashboard();
         }
 
+        /**
+         * 隐藏统计页面
+         */
         function hideStatsPage() {
             document.getElementById('mainPage').style.left = '0px';
             document.getElementById('statsPage').style.left = `-${BASE_WIDTH}px`;
             syncPageTransitionState();
         }
 
+        /**
+         * 显示饼图页面
+         */
         function showPiePage() {
             const pieRing = document.getElementById('pieRing');
             if (pieRing) {
@@ -3038,12 +3495,18 @@
             }, 320);
         }
 
+        /**
+         * 隐藏饼图页面
+         */
         function hidePiePage() {
             document.getElementById('statsPage').style.left = '0px';
             document.getElementById('piePage').style.left = `${BASE_WIDTH}px`;
             syncPageTransitionState();
         }
 
+        /**
+         * 退出应用
+         */
         function quitApp() {
             if (typeof require !== 'undefined') {
                 try {
@@ -3077,37 +3540,68 @@
         progressCircle.style.strokeDasharray = CIRCLE_CIRCUMFERENCE;
         progressCircle.style.strokeDashoffset = 0;
 
+        /**
+         * 格式化时间
+         * @param {number} seconds - 秒数
+         * @returns {string} 格式化后的时间字符串
+         */
         function formatTime(seconds) {
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
             return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
 
+        /**
+         * 获取阶段持续时间
+         * @param {string} phase - 阶段名称
+         * @returns {number} 持续时间（秒）
+         */
         function getPhaseDuration(phase = currentPhase) {
             if (phase === 'shortBreak') return SHORT_BREAK_TIME;
             if (phase === 'longBreak') return LONG_BREAK_TIME;
             return FOCUS_TIME;
         }
 
+        /**
+         * 获取阶段标签
+         * @param {string} phase - 阶段名称
+         * @returns {string} 阶段标签
+         */
         function getPhaseLabel(phase = currentPhase) {
             if (phase === 'shortBreak') return '短休息';
             if (phase === 'longBreak') return '长休息';
             return '专注';
         }
 
+        /**
+         * 获取下一个休息阶段
+         * @returns {string} 下一个休息阶段
+         */
         function getNextBreakPhase() {
             const nextCompleted = completedFocusSessions + 1;
             return nextCompleted % LONG_BREAK_INTERVAL === 0 ? 'longBreak' : 'shortBreak';
         }
 
+        /**
+         * 判断是否为休息阶段
+         * @param {string} phase - 阶段名称
+         * @returns {boolean} 是否为休息阶段
+         */
         function isBreakPhase(phase = currentPhase) {
             return phase === 'shortBreak' || phase === 'longBreak';
         }
 
+        /**
+         * 获取计时器按钮类
+         * @returns {string} 按钮类名
+         */
         function getTimerButtonClass() {
             return isBreakPhase() ? 'btn btn-break' : 'btn';
         }
 
+        /**
+         * 更新计时器主题
+         */
         function updateTimerTheme() {
             if (!timerGradientStopStart || !timerGradientStopMid || !timerGradientStopEnd) return;
 
@@ -3129,6 +3623,9 @@
             }
         }
 
+        /**
+         * 更新显示
+         */
         function updateDisplay() {
             timeDisplay.textContent = formatTime(timeLeft);
             const progress = timeLeft / getPhaseDuration();
@@ -3136,6 +3633,9 @@
             progressCircle.style.strokeDashoffset = offset;
         }
 
+        /**
+         * 更新番茄钟提示
+         */
         function updatePomodoroHint() {
             if (!pomodoroHint) return;
             if (currentPhase === 'shortBreak') {
@@ -3151,6 +3651,11 @@
             pomodoroHint.textContent = `今天第 ${nextIndex} 个番茄钟`;
         }
 
+        /**
+         * 应用阶段
+         * @param {string} phase - 阶段名称
+         * @param {number} nextTimeLeft - 剩余时间（秒）
+         */
         function applyPhase(phase, nextTimeLeft = null) {
             currentPhase = phase;
             timeLeft = nextTimeLeft ?? getPhaseDuration(phase);
@@ -3159,10 +3664,18 @@
             updateTimerTheme();
         }
 
+        /**
+         * 更新状态文本
+         * @param {string} customText - 自定义文本
+         */
         function updateStatusText(customText = '') {
             return;
         }
 
+        /**
+         * 加载今日番茄钟数量
+         * @async
+         */
         async function loadTodayPomodoroCount() {
             if (!currentUserId) {
                 currentTodayPomodoroCount = null;
@@ -3189,6 +3702,9 @@
             updatePomodoroHint();
         }
 
+        /**
+         * 显示运行按钮
+         */
         function showRunningButtons() {
             const buttonClass = getTimerButtonClass();
             btnContainer.innerHTML = `
@@ -3198,6 +3714,9 @@
             `;
         }
 
+        /**
+         * 显示暂停按钮
+         */
         function showPausedButtons() {
             const buttonClass = getTimerButtonClass();
             btnContainer.innerHTML = `
@@ -3207,6 +3726,9 @@
             `;
         }
 
+        /**
+         * 显示开始按钮
+         */
         function showStartButton() {
             const buttonClass = getTimerButtonClass();
             btnContainer.innerHTML = `
@@ -3215,6 +3737,9 @@
             `;
         }
 
+        /**
+         * 完成当前阶段
+         */
         function finishCurrentPhase() {
             clearInterval(timerInterval);
             timerInterval = null;
@@ -3236,10 +3761,16 @@
             updateStatusText('休息结束，准备进入下一轮专注');
         }
 
+        /**
+         * 跳过计时器阶段
+         */
         function skipTimerPhase() {
             finishCurrentPhase();
         }
 
+        /**
+         * 切换计时器
+         */
         function toggleTimer() {
             if (timeLeft === 0) timeLeft = getPhaseDuration();
             isRunning = true;
@@ -3255,6 +3786,9 @@
             }, 1000);
         }
 
+        /**
+         * 暂停计时器
+         */
         function pauseTimer() {
             clearInterval(timerInterval);
             timerInterval = null;
@@ -3262,6 +3796,9 @@
             showPausedButtons();
         }
 
+        /**
+         * 恢复计时器
+         */
         function resumeTimer() {
             isRunning = true;
             updateStatusText();
@@ -3276,6 +3813,9 @@
             }, 1000);
         }
 
+        /**
+         * 重启计时器
+         */
         function restartTimer() {
             clearInterval(timerInterval);
             timerInterval = null;
@@ -3285,6 +3825,9 @@
             updateStatusText();
         }
 
+        /**
+         * 重置计时器
+         */
         function resetTimer() {
             clearInterval(timerInterval);
             timerInterval = null;
@@ -3316,6 +3859,10 @@
             loadLoginUserList();
         }
 
+        /**
+         * 加载登录用户列表
+         * @async
+         */
         async function loadLoginUserList() {
             const select = document.getElementById('loginUserSelect');
             try {
@@ -3333,6 +3880,10 @@
             }
         }
 
+        /**
+         * 同步AI偏好设置输入
+         * @param {string} value - 偏好设置值
+         */
         function syncAiPreferenceInput(value) {
             const input = document.getElementById('aiPreferenceInput');
             const hint = document.getElementById('aiPreferenceHint');
@@ -3347,6 +3898,10 @@
             }
         }
 
+        /**
+         * 加载当前用户的AI偏好设置
+         * @async
+         */
         async function loadAiPreferenceForCurrentUser() {
             const input = document.getElementById('aiPreferenceInput');
             const hint = document.getElementById('aiPreferenceHint');
@@ -3372,6 +3927,10 @@
             }
         }
 
+        /**
+         * 同步每日任务输入
+         * @param {string} value - 任务值
+         */
         function syncDailyTaskInput(value) {
             const input = document.getElementById('dailyTaskInput');
             const hint = document.getElementById('dailyTaskHint');
@@ -3386,6 +3945,10 @@
             }
         }
 
+        /**
+         * 加载当前日期的每日任务
+         * @async
+         */
         async function loadDailyTaskForCurrentDate() {
             const input = document.getElementById('dailyTaskInput');
             const hint = document.getElementById('dailyTaskHint');
@@ -3412,6 +3975,9 @@
             }
         }
 
+        /**
+         * 处理每日任务输入
+         */
         function handleDailyTaskInput() {
             const input = document.getElementById('dailyTaskInput');
             if (!input) return;
@@ -3436,6 +4002,13 @@
             }, 500);
         }
 
+        /**
+         * 保存每日任务
+         * @async
+         * @param {string} taskText - 任务文本
+         * @param {Object} options - 选项
+         * @param {boolean} options.refreshDashboard - 是否刷新仪表板
+         */
         async function saveDailyTask(taskText, options = {}) {
             const { refreshDashboard = true } = options;
             if (!currentUserId) return;
@@ -3471,6 +4044,10 @@
             }
         }
 
+        /**
+         * 生成每日报告
+         * @async
+         */
         async function generateDailyReport() {
             if (!currentUserId) return;
             if (!hasDashboardData()) {
@@ -3511,6 +4088,9 @@
             }
         }
 
+        /**
+         * 处理AI偏好设置输入
+         */
         function handleAiPreferenceInput() {
             const input = document.getElementById('aiPreferenceInput');
             if (!input) return;
@@ -3531,6 +4111,10 @@
             }, 500);
         }
 
+        /**
+         * 处理AI偏好设置键盘事件
+         * @param {Event} event - 键盘事件
+         */
         function handleAiPreferenceKeydown(event) {
             if (!event) return;
             if (event.key !== 'Enter' || event.shiftKey) {
@@ -3559,6 +4143,11 @@
             closeAiPreferencePanel();
         }
 
+        /**
+         * 保存AI偏好设置
+         * @async
+         * @param {string} preferenceText - 偏好设置文本
+         */
         async function saveAiPreference(preferenceText) {
             if (!currentUserId) return;
             try {
